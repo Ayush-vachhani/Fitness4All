@@ -35,6 +35,11 @@ class _MealsScreenState extends State<MealsScreen> {
     3: Colors.red,
     4: Colors.purple,
     5: Colors.teal,
+    6: Colors.indigo,  // Meal Templates
+    7: Colors.brown,   // Daily Meal Plan
+    8: Colors.amber,   // Healthy Snack Options
+    9: Colors.pink,    // Nutritional Comparisons
+    10: Colors.cyan,   // Micronutrient Deficiencies
   };
 
   final List<String> _mealCategories = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -45,54 +50,9 @@ class _MealsScreenState extends State<MealsScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: color,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3), // Increased duration
       ),
     );
-  }
-
-  void _saveMeal() {
-    if (_mealController.text.isNotEmpty && _caloriesController.text.isNotEmpty) {
-      setState(() {
-        _savedMeals.add({
-          "name": _mealController.text,
-          "calories": int.tryParse(_caloriesController.text) ?? 0,
-          "category": _selectedCategory,
-          "notes": _notesController.text,
-          "date": DateTime.now(),
-        });
-
-        _calories += int.tryParse(_caloriesController.text) ?? 0;
-        _mealController.clear();
-        _caloriesController.clear();
-        _notesController.clear();
-      });
-
-      _showSnackBar("Meal saved successfully!", color: Colors.green);
-    } else {
-      _showSnackBar("Enter meal name & calories!", color: Colors.red);
-    }
-  }
-
-  void _setCalorieLimit() {
-    if (_calorieLimitController.text.isNotEmpty) {
-      setState(() {
-        _calorieLimit = int.tryParse(_calorieLimitController.text) ?? _calorieLimit;
-      });
-      _showSnackBar("Calorie limit updated to $_calorieLimit kcal", color: Colors.red);
-    }
-  }
-
-  void _addWaterIntake() {
-    if (_waterController.text.isNotEmpty) {
-      setState(() {
-        _waterIntake += int.tryParse(_waterController.text) ?? 0;
-        _waterLogs.add("${_waterController.text} ml at ${DateTime.now().toString().split('.')[0]}");
-        _waterController.clear();
-      });
-      _showSnackBar("Water intake added!", color: Colors.blue);
-    } else {
-      _showSnackBar("Enter water intake!", color: Colors.red);
-    }
   }
 
   Widget _mealCard(Map<String, dynamic> meal) {
@@ -105,7 +65,7 @@ class _MealsScreenState extends State<MealsScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("🍽️ Category: ${meal["category"]}"),
+            Text("🍽 Category: ${meal["category"]}"),
             Text("🔥 ${meal["calories"]} kcal"),
             if (meal["notes"].isNotEmpty) Text("📝 Notes: ${meal["notes"]}"),
             Text("📅 ${meal["date"].toString().split('.')[0]}"),
@@ -122,6 +82,7 @@ class _MealsScreenState extends State<MealsScreen> {
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(icon, size: 80, color: color),
             const SizedBox(height: 20),
@@ -144,10 +105,14 @@ class _MealsScreenState extends State<MealsScreen> {
   }
 
   late final List<Widget> _pages;
+  late final PageController _pageController;
+  late final ScrollController _bottomNavScrollController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+    _bottomNavScrollController = ScrollController();
     _pages = [
       _buildPage(
         "Add Meal",
@@ -173,7 +138,30 @@ class _MealsScreenState extends State<MealsScreen> {
             const SizedBox(height: 10),
             TextField(controller: _notesController, decoration: const InputDecoration(labelText: "Add notes (optional)")),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: _saveMeal, child: const Text("Save Meal")),
+            ElevatedButton(
+              onPressed: () {
+                if (_mealController.text.isNotEmpty && _caloriesController.text.isNotEmpty) {
+                  setState(() {
+                    int mealCalories = int.parse(_caloriesController.text);
+                    _calories += mealCalories; // Update total calories
+                    _savedMeals.add({
+                      "name": _mealController.text,
+                      "category": _selectedCategory,
+                      "calories": mealCalories,
+                      "notes": _notesController.text,
+                      "date": DateTime.now(),
+                    });
+                    _mealController.clear();
+                    _caloriesController.clear();
+                    _notesController.clear();
+                  });
+                  _showSnackBar("Meal added successfully!");
+                } else {
+                  _showSnackBar("Please fill in all fields.", color: Colors.red);
+                }
+              },
+              child: const Text("Save Meal"),
+            ),
             const SizedBox(height: 20),
             _savedMeals.isNotEmpty
                 ? Expanded(
@@ -197,7 +185,20 @@ class _MealsScreenState extends State<MealsScreen> {
             const SizedBox(height: 10),
             TextField(controller: _calorieLimitController, decoration: const InputDecoration(labelText: "Enter new limit"), keyboardType: TextInputType.number),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: _setCalorieLimit, child: const Text("Update Limit")),
+            ElevatedButton(
+              onPressed: () {
+                if (_calorieLimitController.text.isNotEmpty) {
+                  setState(() {
+                    _calorieLimit = int.parse(_calorieLimitController.text);
+                    _calorieLimitController.clear();
+                  });
+                  _showSnackBar("Calorie limit set successfully!");
+                } else {
+                  _showSnackBar("Please enter a valid limit.", color: Colors.red);
+                }
+              },
+              child: const Text("Update Limit"),
+            ),
           ],
         ),
         _pageColors[3]!,
@@ -212,7 +213,21 @@ class _MealsScreenState extends State<MealsScreen> {
             const SizedBox(height: 10),
             TextField(controller: _waterController, decoration: const InputDecoration(labelText: "Enter water intake (ml)"), keyboardType: TextInputType.number),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: _addWaterIntake, child: const Text("Add Water Intake")),
+            ElevatedButton(
+              onPressed: () {
+                if (_waterController.text.isNotEmpty) {
+                  setState(() {
+                    _waterIntake += int.parse(_waterController.text);
+                    _waterLogs.add("${_waterController.text} ml at ${DateTime.now()}");
+                    _waterController.clear();
+                  });
+                  _showSnackBar("Water intake added successfully!");
+                } else {
+                  _showSnackBar("Please enter a valid amount.", color: Colors.red);
+                }
+              },
+              child: const Text("Add Water Intake"),
+            ),
             const SizedBox(height: 20),
             if (_waterLogs.isNotEmpty)
               Expanded(
@@ -257,12 +272,103 @@ class _MealsScreenState extends State<MealsScreen> {
         ),
         _pageColors[5]!,
       ),
+      _buildPage(
+        "Nutrient Breakdown",
+        Icons.info,
+        "View breakdown of nutrients.",
+        Column(
+          children: [
+            Text("Carbs: 250g", style: const TextStyle(fontSize: 16)),
+            Text("Proteins: 150g", style: const TextStyle(fontSize: 16)),
+            Text("Fats: 70g", style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        _pageColors[1]!,
+      ),
+      _buildPage(
+        "Meal Templates",
+        Icons.save,
+        "Save your favorite meals as templates.",
+        Column(
+          children: [
+            Text("1. Chicken Stir Fry", style: const TextStyle(fontSize: 16)),
+            Text("2. Veggie Wrap", style: const TextStyle(fontSize: 16)),
+            Text("3. Smoothie Bowl", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 10),
+            ElevatedButton(onPressed: () {}, child: const Text("Save Current Meal as Template")),
+          ],
+        ),
+        _pageColors[2]!,
+      ),
+      _buildPage(
+        "Daily Meal Plan",
+        Icons.calendar_today,
+        "View and customize your daily meal plan.",
+        Column(
+          children: [
+            Text("Breakfast: Oatmeal with Fruits", style: const TextStyle(fontSize: 16)),
+            Text("Lunch: Grilled Chicken Salad", style: const TextStyle(fontSize: 16)),
+            Text("Dinner: Quinoa and Vegetables", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 10),
+            ElevatedButton(onPressed: () {}, child: const Text("Customize Meal Plan")),
+          ],
+        ),
+        _pageColors[3]!,
+      ),
+      _buildPage(
+        "Healthy Snack Options",
+        Icons.local_pizza,
+        "Get healthier snack recommendations.",
+        Column(
+          children: [
+            Text("1. Greek Yogurt with Honey", style: const TextStyle(fontSize: 16)),
+            Text("2. Hummus with Veggies", style: const TextStyle(fontSize: 16)),
+            Text("3. Mixed Nuts", style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        _pageColors[4]!,
+      ),
+      _buildPage(
+        "Nutritional Comparisons",
+        Icons.compare_arrows,
+        "Compare nutritional values of foods.",
+        Column(
+          children: [
+            Text("Chips: 150 kcal, 10g fat", style: const TextStyle(fontSize: 16)),
+            Text("Veggie Sticks: 50 kcal, 0g fat", style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        _pageColors[5]!,
+      ),
+      _buildPage(
+        "Micronutrient Deficiencies",
+        Icons.warning,
+        "Highlight deficiencies and suggest adjustments.",
+        Column(
+          children: [
+            Text("Deficiency in Vitamin D:", style: const TextStyle(fontSize: 16)),
+            Text("Consider adding more fatty fish or fortified foods.", style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        _pageColors[1]!,
+      ),
     ];
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      // Scroll the bottom navigation bar to the selected index
+      _bottomNavScrollController.animateTo(
+        index * 80.0, // Adjust this value based on your item width
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -273,17 +379,47 @@ class _MealsScreenState extends State<MealsScreen> {
     _notesController.dispose();
     _waterController.dispose();
     _calorieLimitController.dispose();
+    _pageController.dispose();
+    _bottomNavScrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Nutrition & Meal Tracker"), backgroundColor: _pageColors[_selectedIndex], centerTitle: true),
-      body: AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: _pages[_selectedIndex]),
+      appBar: AppBar(
+        title: const Text("Nutrition & Meal Tracker"),
+        backgroundColor: _pageColors[_selectedIndex] ?? Colors.blue, // Ensure a default color
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              // Add your settings functionality here
+              _showSnackBar("Settings clicked!");
+            },
+          ),
+        ],
+      ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+            // Scroll the bottom navigation bar to the selected index
+            _bottomNavScrollController.animateTo(
+              index * 80.0, // Adjust this value based on your item width
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          });
+        },
+        children: _pages,
+      ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
+        scrollController: _bottomNavScrollController,
       ),
     );
   }
@@ -292,49 +428,78 @@ class _MealsScreenState extends State<MealsScreen> {
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
+  final ScrollController scrollController;
 
   const CustomBottomNavBar({
     Key? key,
     required this.selectedIndex,
     required this.onItemTapped,
+    required this.scrollController,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: [
-        _buildNavItem(Icons.restaurant, "Meals", 0),
-        _buildNavItem(Icons.settings, "Limits", 1),
-        _buildNavItem(Icons.local_drink, "Water", 2),
-        _buildNavItem(Icons.track_changes, "Calories", 3),
-        _buildNavItem(Icons.recommend, "Suggestions", 4),
-      ],
-      currentIndex: selectedIndex,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.blue,
-      onTap: onItemTapped,
+    return Container(
+      height: 80, // Increased height for the bottom navigation bar
+      color: Colors.white, // Set the background color to white
+      child: SingleChildScrollView(
+        controller: scrollController,
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(Icons.restaurant, "Meals", 0, Colors.green),
+            _buildNavItem(Icons.settings, "Limits", 1, Colors.orange),
+            _buildNavItem(Icons.local_drink, "Water", 2, Colors.blue),
+            _buildNavItem(Icons.track_changes, "Calories", 3, Colors.red),
+            _buildNavItem(Icons.recommend, "Suggestions", 4, Colors.purple),
+            _buildNavItem(Icons.info, "Nutrients", 5, Colors.teal),
+            _buildNavItem(Icons.save, "Templates", 6, Colors.indigo), // Meal Templates
+            _buildNavItem(Icons.calendar_today, "Meal Plan", 7, Colors.brown), // Daily Meal Plan
+            _buildNavItem(Icons.local_pizza, "Snacks", 8, Colors.amber), // Healthy Snack Options
+            _buildNavItem(Icons.compare_arrows, "Compare", 9, Colors.pink), // Nutritional Comparisons
+            _buildNavItem(Icons.warning, "Deficiencies", 10, Colors.cyan), // Micronutrient Deficiencies
+          ],
+        ),
+      ),
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
-    return BottomNavigationBarItem(
-      icon: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          color: selectedIndex == index ? Colors.blue : Colors.transparent,
-          border: Border.all(
-            color: selectedIndex == index ? Colors.white : Colors.transparent,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(
-          icon,
-          color: selectedIndex == index ? Colors.white : Colors.grey,
+  Widget _buildNavItem(IconData icon, String label, int index, Color color) {
+    return GestureDetector(
+      onTap: () => onItemTapped(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Increased vertical padding
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: selectedIndex == index ? color : Colors.transparent,
+                border: Border.all(
+                  color: color,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                size: 30, // Increased icon size
+                color: selectedIndex == index ? Colors.white : color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14, // Increased font size
+                color: selectedIndex == index ? Colors.black : Colors.grey,
+              ),
+            ),
+          ],
         ),
       ),
-      label: label,
     );
   }
 }
