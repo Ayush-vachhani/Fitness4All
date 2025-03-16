@@ -1,5 +1,9 @@
 import 'package:fitness4all/common/color_extensions.dart';
+
+import 'package:fitness4all/screen/home/Main_home/fav.dart';
+
 import 'package:fitness4all/screen/home/Main_home/line_chart.dart';
+import 'package:fitness4all/screen/home/Main_home/plus_button.dart';
 import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
 import 'package:fitness4all/screen/home/exercises/exercises_screen.dart';
 import 'package:fitness4all/screen/home/goals/main_goal_page.dart';
@@ -154,7 +158,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: TColor.secondaryColor,
-        onPressed: () {},
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddButtonCode()),
+          );
+        },
         child: const Icon(
           Icons.add,
           color: Colors.white,
@@ -170,7 +179,12 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.home),
               color: Colors.white,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                );
+              },
             ),
             IconButton(
               icon: const Icon(Icons.add_chart),
@@ -181,7 +195,12 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.favorite_border),
               color: Colors.white,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Favorites()),
+                );
+              },
             ),
             IconButton(
               icon: const Icon(Icons.person_outline),

@@ -1,8 +1,9 @@
+
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/common_widgets/round_button.dart';
 import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
-import 'package:fitness4all/screen/home/exercises/exercises_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -14,38 +15,31 @@ class OnBoardingScreen extends StatefulWidget {
 class _OnBoardingScreenState extends State<OnBoardingScreen> {
   int selectPage = 0;
   PageController controller = PageController();
-
-  List pageArr = [
-    {
-      "title": "Exercises",
-      "subtitle": "Your New Personalized Trainer",
-      "image": "assets/img/excerise.png"
-    },
-    {
-      "title": "Logger",
-      "subtitle": "Log your activities each time !!",
-      "image": "assets/img/ex_3.png"
-    },
-    {
-      "title": "Track your progress",
-      "subtitle": "Check your progress whenever and wherever",
-      "image": "assets/img/ex_4.png"
-    },
-    {
-      "title": "Get Personalized Suggestions",
-      "subtitle": "We monitor your activities to give you the best insights possible",
-      "image": "assets/img/ex_5.png"
-    }
-  ];
+  final PocketBase pb = PocketBase('http://127.0.0.1:8090'); // Replace with your PocketBase URL
+  List<Map<String, dynamic>> pageArr = [];
 
   @override
   void initState() {
     super.initState();
+    _fetchOnboardingData();
     controller.addListener(() {
       setState(() {
         selectPage = controller.page?.round() ?? 0;
       });
     });
+  }
+
+  Future<void> _fetchOnboardingData() async {
+    try {
+      final result = await pb.collection('onboarding_data').getFullList();
+      setState(() {
+        pageArr = result.map((record) => record.toJson()).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch onboarding data: $e")),
+      );
+    }
   }
 
   @override
@@ -141,7 +135,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                     title: "Next",
                     width: 150,
                     onPressed: () {
-                      if (selectPage >= 3) {
+                      if (selectPage >= pageArr.length - 1) {
                         Navigator.pushReplacement(
                             context, MaterialPageRoute(builder: (context) => const MealsScreen()));
                       } else {
