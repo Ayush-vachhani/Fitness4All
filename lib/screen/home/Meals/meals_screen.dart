@@ -1,6 +1,8 @@
+
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/screen/home/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class MealsScreen extends StatefulWidget {
   const MealsScreen({super.key});
@@ -22,13 +24,10 @@ class _MealsScreenState extends State<MealsScreen> {
   int _waterIntake = 0;
   final List<Map<String, dynamic>> _savedMeals = [];
   final List<String> _waterLogs = [];
-  final List<String> _mealRecommendations = [
-    "🥗 Salad with Grilled Chicken",
-    "🍳 Scrambled Eggs with Avocado Toast",
-    "🍲 Lentil Soup with Whole Grain Bread",
-    "🥑 Greek Yogurt with Berries & Nuts",
-    "🥜 Peanut Butter Banana Smoothie"
-  ];
+  List<String> _mealRecommendations = [];
+
+  // Initialize PocketBase
+  final PocketBase pb = PocketBase('http://127.0.0.1:8090'); // Replace with your PocketBase URL
 
   final Map<int, Color> _pageColors = {
     0: Colors.green,
@@ -47,75 +46,30 @@ class _MealsScreenState extends State<MealsScreen> {
   final List<String> _mealCategories = ["Breakfast", "Lunch", "Dinner", "Snack"];
   String _selectedCategory = "Lunch";
 
-  void _showSnackBar(String message, {Color color = Colors.green}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 3), // Increased duration
-      ),
-    );
-  }
-
-  Widget _mealCard(Map<String, dynamic> meal) {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: const Icon(Icons.fastfood, size: 40, color: Colors.green),
-        title: Text(meal["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("🍽 Category: ${meal["category"]}"),
-            Text("🔥 ${meal["calories"]} kcal"),
-            if (meal["notes"].isNotEmpty) Text("📝 Notes: ${meal["notes"]}"),
-            Text("📅 ${meal["date"].toString().split('.')[0]}"),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPage(String title, IconData icon, String description, Widget child, Color color) {
-    return Container(
-      color: color.withOpacity(0.1),
-      padding: const EdgeInsets.all(20),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, size: 80, color: color),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: color.withOpacity(0.8)),
-            ),
-            const SizedBox(height: 20),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-
-  late final List<Widget> _pages;
   late final PageController _pageController;
   late final ScrollController _bottomNavScrollController;
+  late List<Widget> _pages; // Declare _pages as late
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize controllers
     _pageController = PageController(initialPage: _selectedIndex);
     _bottomNavScrollController = ScrollController();
-    _pages = [
+
+    // Initialize _pages
+    _pages = _buildPages();
+
+    // Fetch data from PocketBase
+    _fetchMeals();
+    _fetchMealRecommendations();
+    _fetchWaterLogs();
+    _fetchCalorieLimit();
+  }
+
+  List<Widget> _buildPages() {
+    return [
       _buildPage(
         "Add Meal",
         Icons.restaurant,
@@ -141,23 +95,21 @@ class _MealsScreenState extends State<MealsScreen> {
             TextField(controller: _notesController, decoration: const InputDecoration(labelText: "Add notes (optional)")),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_mealController.text.isNotEmpty && _caloriesController.text.isNotEmpty) {
-                  setState(() {
-                    int mealCalories = int.parse(_caloriesController.text);
-                    _calories += mealCalories; // Update total calories
-                    _savedMeals.add({
+                  try {
+                    await pb.collection('meals').create(body: {
                       "name": _mealController.text,
                       "category": _selectedCategory,
-                      "calories": mealCalories,
+                      "calories": int.parse(_caloriesController.text),
                       "notes": _notesController.text,
-                      "date": DateTime.now(),
+                      "date": DateTime.now().toIso8601String(),
                     });
-                    _mealController.clear();
-                    _caloriesController.clear();
-                    _notesController.clear();
-                  });
-                  _showSnackBar("Meal added successfully!");
+                    _fetchMeals();
+                    _showSnackBar("Meal added successfully!");
+                  } catch (e) {
+                    _showSnackBar("Failed to save meal: $e", color: Colors.red);
+                  }
                 } else {
                   _showSnackBar("Please fill in all fields.", color: Colors.red);
                 }
@@ -357,6 +309,114 @@ class _MealsScreenState extends State<MealsScreen> {
     ];
   }
 
+  Future<void> _fetchMeals() async {
+    try {
+      final result = await pb.collection('meals').getFullList();
+      setState(() {
+        _savedMeals.clear();
+        _savedMeals.addAll(result.map((record) => record.data).toList());
+      });
+    } catch (e) {
+      _showSnackBar("Failed to fetch meals: $e", color: Colors.red);
+    }
+  }
+
+  Future<void> _fetchMealRecommendations() async {
+    try {
+      final result = await pb.collection('meal_recommendations').getFullList();
+      setState(() {
+        _mealRecommendations = result.map((record) => record.data['recommendation'] as String).toList();
+      });
+    } catch (e) {
+      _showSnackBar("Failed to fetch recommendations: $e", color: Colors.red);
+    }
+  }
+
+  Future<void> _fetchWaterLogs() async {
+    try {
+      final result = await pb.collection('water_intake').getFullList();
+      setState(() {
+        _waterLogs.clear();
+        _waterLogs.addAll(result.map((record) => "${record.data['amount']} ml at ${record.data['date']}").toList());
+        _waterIntake = result.fold(0, (sum, record) => sum + (record.data['amount'] as int));
+      });
+    } catch (e) {
+      _showSnackBar("Failed to fetch water logs: $e", color: Colors.red);
+    }
+  }
+
+  Future<void> _fetchCalorieLimit() async {
+    try {
+      final result = await pb.collection('calorie_limit').getFullList();
+      if (result.isNotEmpty) {
+        setState(() {
+          _calorieLimit = result.last.data['limit'];
+        });
+      }
+    } catch (e) {
+      _showSnackBar("Failed to fetch calorie limit: $e", color: Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, {Color color = Colors.green}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Widget _mealCard(Map<String, dynamic> meal) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        leading: const Icon(Icons.fastfood, size: 40, color: Colors.green),
+        title: Text(meal["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("🍽 Category: ${meal["category"]}"),
+            Text("🔥 ${meal["calories"]} kcal"),
+            if (meal["notes"].isNotEmpty) Text("📝 Notes: ${meal["notes"]}"),
+            Text("📅 ${meal["date"].toString().split('.')[0]}"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPage(String title, IconData icon, String description, Widget child, Color color) {
+    return Container(
+      color: color.withOpacity(0.1),
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 80, color: color),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: color.withOpacity(0.8)),
+            ),
+            const SizedBox(height: 20),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -365,9 +425,8 @@ class _MealsScreenState extends State<MealsScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      // Scroll the bottom navigation bar to the selected index
       _bottomNavScrollController.animateTo(
-        index * 80.0, // Adjust this value based on your item width
+        index * 80.0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -375,29 +434,16 @@ class _MealsScreenState extends State<MealsScreen> {
   }
 
   @override
-  void dispose() {
-    _mealController.dispose();
-    _caloriesController.dispose();
-    _notesController.dispose();
-    _waterController.dispose();
-    _calorieLimitController.dispose();
-    _pageController.dispose();
-    _bottomNavScrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Nutrition & Meal Tracker"),
-        backgroundColor: _pageColors[_selectedIndex] ?? Colors.blue, // Ensure a default color
+        backgroundColor: _pageColors[_selectedIndex] ?? Colors.blue,
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Add your settings functionality here
               context.push(const SettingScreen());
             },
           ),
@@ -408,12 +454,6 @@ class _MealsScreenState extends State<MealsScreen> {
         onPageChanged: (index) {
           setState(() {
             _selectedIndex = index;
-            // Scroll the bottom navigation bar to the selected index
-            _bottomNavScrollController.animateTo(
-              index * 80.0, // Adjust this value based on your item width
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
           });
         },
         children: _pages,
@@ -442,8 +482,8 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80, // Increased height for the bottom navigation bar
-      color: Colors.white, // Set the background color to white
+      height: 80,
+      color: Colors.white,
       child: SingleChildScrollView(
         controller: scrollController,
         scrollDirection: Axis.horizontal,
@@ -456,11 +496,11 @@ class CustomBottomNavBar extends StatelessWidget {
             _buildNavItem(Icons.recommend, "Suggestions", 3, Colors.red),
             _buildNavItem(Icons.track_changes, "Calories", 4, Colors.purple),
             _buildNavItem(Icons.info, "Nutrients", 5, Colors.teal),
-            _buildNavItem(Icons.save, "Templates", 6, Colors.indigo), // Meal Templates
-            _buildNavItem(Icons.calendar_today, "Meal Plan", 7, Colors.brown), // Daily Meal Plan
-            _buildNavItem(Icons.local_pizza, "Snacks", 8, Colors.amber), // Healthy Snack Options
-            _buildNavItem(Icons.compare_arrows, "Compare", 9, Colors.pink), // Nutritional Comparisons
-            _buildNavItem(Icons.warning, "Deficiencies", 10, Colors.cyan), // Micronutrient Deficiencies
+            _buildNavItem(Icons.save, "Templates", 6, Colors.indigo),
+            _buildNavItem(Icons.calendar_today, "Meal Plan", 7, Colors.brown),
+            _buildNavItem(Icons.local_pizza, "Snacks", 8, Colors.amber),
+            _buildNavItem(Icons.compare_arrows, "Compare", 9, Colors.pink),
+            _buildNavItem(Icons.warning, "Deficiencies", 10, Colors.cyan),
           ],
         ),
       ),
@@ -471,7 +511,7 @@ class CustomBottomNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => onItemTapped(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Increased vertical padding
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -487,7 +527,7 @@ class CustomBottomNavBar extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                size: 30, // Increased icon size
+                size: 30,
                 color: selectedIndex == index ? Colors.white : color,
               ),
             ),
@@ -495,7 +535,7 @@ class CustomBottomNavBar extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 14, // Increased font size
+                fontSize: 14,
                 color: selectedIndex == index ? Colors.black : Colors.grey,
               ),
             ),
