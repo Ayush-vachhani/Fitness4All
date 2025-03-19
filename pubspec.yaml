@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   pocketbase: ^0.22.0
+  mockito: ^5.4.5
   otp_text_field_v2: ^1.0.0
   otp_timer_button: ^1.0.0
 

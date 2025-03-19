@@ -1,6 +1,7 @@
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/screen/home/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart'; // Add this import
 
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key});
@@ -15,10 +16,54 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _timerController = TextEditingController();
+  final TextEditingController _MorningController = TextEditingController();
+  final TextEditingController _EveningController = TextEditingController();
+  final TextEditingController _AfternoonController = TextEditingController();
+
+
+  void _startTimer() {
+    setState(() {
+      _isTimerRunning = true; // Set the timer state to running
+      _startTime = DateTime.now(); // Record the start time
+      print("Timer started at: $_startTime");
+    });
+  }
+
+  void _stopTimer() {
+    setState(() {
+      _isTimerRunning = false; // Set the timer state to stopped
+      _endTime = DateTime.now(); // Record the end time
+
+      if (_startTime != null && _endTime != null) {
+        // Calculate the time difference in seconds
+        _timeDifference = _endTime!.difference(_startTime!).inSeconds;
+
+        // Update total time spent (accumulate previous time differences)
+        _totalTimeSpent += _timeDifference;
+
+        // Calculate calories burned (time difference * 0.017)
+        double caloriesBurned = _timeDifference * 0.017;
+
+        // Update total calories burned (accumulate previous calories burned)
+        _totalCaloriesBurned += caloriesBurned.round(); // Round to the nearest integer
+
+        // Show a snackbar with the results
+        _showSnackBar(
+          "Timer stopped! Time spent: $_timeDifference seconds, Calories burned: ${caloriesBurned.toStringAsFixed(2)} kcal",
+        );
+
+        // Debugging: Print the updated values
+        print("Total Calories Burned: $_totalCaloriesBurned");
+        print("Total Time Spent: $_totalTimeSpent");
+      }
+    });
+  }
 
   // Local variables to store exercise data
+  // Local variables to store exercise data
   int _totalCaloriesBurned = 0;
-  int _totalTimeSpent = 0; // Time spent in minutes
+  int _totalTimeSpent = 0; // Time spent in seconds
   final List<Map<String, dynamic>> _savedExercises = [];
   final List<String> _exerciseRecommendations = [
     "🏋️‍♂️ Weightlifting",
@@ -31,6 +76,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     "🤼‍♂️ Wrestling"
   ];
 
+  // Timer-related variables
+  bool _isTimerRunning = false; // Tracks if the timer is running
+  DateTime? _startTime; // Stores the start time of the timer
+  DateTime? _endTime; // Stores the end time of the timer
+  int _timeDifference = 0; // Stores the
+
   final Map<int, Color> _pageColors = {
     0: Colors.green,
     1: Colors.orange,
@@ -40,8 +91,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     5: Colors.teal,
   };
 
+
   final List<String> _exerciseCategories = ["Cardio", "Strength", "Flexibility", "Endurance"];
   String _selectedCategory = "Cardio";
+
+  // Initialize PocketBase
+  final pb = PocketBase('http://10.12.233.180:8090');
 
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -140,27 +195,44 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             TextField(controller: _notesController, decoration: const InputDecoration(labelText: "Add notes (optional)")),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_exerciseController.text.isNotEmpty && _caloriesController.text.isNotEmpty && _timeController.text.isNotEmpty) {
-                  setState(() {
-                    int exerciseCalories = int.parse(_caloriesController.text);
-                    int exerciseTime = int.parse(_timeController.text);
-                    _totalCaloriesBurned += exerciseCalories;
-                    _totalTimeSpent += exerciseTime;
-                    _savedExercises.add({
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
                       "name": _exerciseController.text,
-                      "category": _selectedCategory,
-                      "calories": exerciseCalories,
-                      "time": exerciseTime,
                       "notes": _notesController.text,
-                      "date": DateTime.now(),
+                      "calories_burned": int.parse(_caloriesController.text),
+                      "time_spent": _timeController.text,
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('ExerciseMain').create(body: body);
+
+                    // Update the local state
+                    setState(() {
+                      int exerciseCalories = int.parse(_caloriesController.text);
+                      int exerciseTime = int.parse(_timeController.text);
+                      _totalCaloriesBurned += exerciseCalories;
+                      _totalTimeSpent += exerciseTime;
+                      _savedExercises.add({
+                        "name": _exerciseController.text,
+                        "category": _selectedCategory,
+                        "calories": exerciseCalories,
+                        "time": exerciseTime,
+                        "notes": _notesController.text,
+                        "date": DateTime.now(),
+                      });
+                      _exerciseController.clear();
+                      _caloriesController.clear();
+                      _timeController.clear();
+                      _notesController.clear();
                     });
-                    _exerciseController.clear();
-                    _caloriesController.clear();
-                    _timeController.clear();
-                    _notesController.clear();
-                  });
-                  _showSnackBar("Exercise logged successfully!");
+
+                    _showSnackBar("Exercise logged successfully!");
+                  } catch (e) {
+                    _showSnackBar("Failed to log exercise: $e", color: Colors.red);
+                  }
                 } else {
                   _showSnackBar("Please fill in all fields.", color: Colors.red);
                 }
@@ -186,8 +258,25 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         "Track calories burned based on time spent.",
         Column(
           children: [
-            Text("🔥 Total Calories Burned: $_totalCaloriesBurned kcal", style: const TextStyle(fontSize: 18)),
-            Text("⏱ Total Time Spent: $_totalTimeSpent minutes", style: const TextStyle(fontSize: 18)),
+            Text(
+              "🔥 Total Calories Burned are logged below ",
+              style: const TextStyle(fontSize: 18),
+            ),
+            Text(
+              "⏱ Total Time Spent are logged below",
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () {
+                  if (_isTimerRunning) {
+                    _stopTimer();
+                  } else {
+                    _startTimer();
+                  }
+                },
+                child: Text(_isTimerRunning ? "Stop" : "Click here"),
+            ),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
@@ -203,6 +292,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         ),
         _pageColors[1]!,
       ),
+
+
       _buildPage(
         "Exercise Recommendations",
         Icons.recommend,
@@ -218,19 +309,36 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         "Set and log your exercise time frame.",
         Column(
           children: [
-            Text("⏱ Total Time Spent: $_totalTimeSpent minutes", style: const TextStyle(fontSize: 18)),
+            Text("⏱ Total Time Spent will be logged upon tryping", style: const TextStyle(fontSize: 15)),
             const SizedBox(height: 10),
-            TextField(controller: _timeController, decoration: const InputDecoration(labelText: "Enter time spent (minutes)"), keyboardType: TextInputType.number),
+            TextField(controller: _timerController, decoration: const InputDecoration(labelText: "Enter time spent (minutes)"), keyboardType: TextInputType.number),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
-                if (_timeController.text.isNotEmpty) {
-                  setState(() {
-                    _totalTimeSpent += int.parse(_timeController.text);
-                    _timeController.clear();
-                  });
-                  _showSnackBar("Time logged successfully!");
+              onPressed: () async {
+                if (_timerController.text.isNotEmpty) {
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "Time": int.parse(_timerController.text), // Convert the input to an integer
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('TimeSetter').create(body: body);
+
+                    // Update the local state
+                    setState(() {
+                      _totalTimeSpent += int.parse(_timerController.text);
+                      _timerController.clear();
+                    });
+
+                    // Show a success message
+                    _showSnackBar("Time logged successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to log time: $e", color: Colors.red);
+                  }
                 } else {
+                  // Show a message if the field is empty
                   _showSnackBar("Please enter a valid time.", color: Colors.red);
                 }
               },
@@ -261,11 +369,43 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         "View and customize your daily exercise plan.",
         Column(
           children: [
-            Text("Morning: Jogging", style: const TextStyle(fontSize: 16)),
-            Text("Afternoon: Weightlifting", style: const TextStyle(fontSize: 16)),
-            Text("Evening: Yoga", style: const TextStyle(fontSize: 16)),
+            TextField(controller: _MorningController, decoration: const InputDecoration(labelText: "Add your morning plan")),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: () {}, child: const Text("Customize Plan")),
+            TextField(controller: _EveningController, decoration: const InputDecoration(labelText: "Add your afternoon plan")),
+            const SizedBox(height: 10),
+            TextField(controller: _AfternoonController, decoration: const InputDecoration(labelText: "Add your evening plan")),
+            const SizedBox(height: 10),
+
+
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                if (_MorningController.text.isNotEmpty || _AfternoonController.text.isNotEmpty || _EveningController.text.isNotEmpty) {
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "morning": _MorningController.text,
+                      "afternoon": _AfternoonController.text,
+                      "evening": _EveningController.text,
+                      "day": "test", // Keep day as "test" as per your requirement
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('DailyExercisePlan').create(body: body);
+
+                    // Show a success message
+                    _showSnackBar("Daily exercise plan saved successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to save daily exercise plan: $e", color: Colors.red);
+                  }
+                } else {
+                  // Show a message if all fields are empty
+                  _showSnackBar("Please fill in at least one field.", color: Colors.red);
+                }
+              },
+              child: const Text("Customize Plan"),
+            ),
           ],
         ),
         _pageColors[5]!,
