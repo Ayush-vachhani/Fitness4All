@@ -1,3 +1,4 @@
+import 'dart:math';
 
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/screen/home/settings/settings_screen.dart';
@@ -13,12 +14,58 @@ class MealsScreen extends StatefulWidget {
 
 class _MealsScreenState extends State<MealsScreen> {
   int _selectedIndex = 0;
+
+  // Function to get a random recommendation from a list
+  String _getRandomRecommendation(List<String> recommendations) {
+    final random = Random();
+    return recommendations[random.nextInt(recommendations.length)];
+  }
+
+  // Lists of meal recommendations
+  final List<String> _breakfastRecommendations = [
+    "Oatmeal with fruits",
+    "Avocado toast",
+    "Scrambled eggs with spinach",
+    "Greek yogurt with honey and nuts",
+    "Smoothie bowl",
+  ];
+
+  final List<String> _lunchRecommendations = [
+    "Grilled chicken salad",
+    "Quinoa and vegetable stir-fry",
+    "Turkey and avocado wrap",
+    "Lentil soup with whole-grain bread",
+    "Sushi rolls",
+  ];
+
+  final List<String> _snackRecommendations = [
+    "Apple slices with peanut butter",
+    "Trail mix",
+    "Hummus with veggie sticks",
+    "Dark chocolate and almonds",
+    "Protein bar",
+  ];
+
+  final List<String> _dinnerRecommendations = [
+    "Grilled salmon with asparagus",
+    "Vegetable curry with brown rice",
+    "Stuffed bell peppers",
+    "Spaghetti squash with marinara sauce",
+    "Chicken stir-fry with broccoli",
+  ];
+
+  // Controllers for text fields
   final TextEditingController _mealController = TextEditingController();
+  final TextEditingController _templateController = TextEditingController();
+  final TextEditingController _breakfastController = TextEditingController();
+  final TextEditingController _lunchController = TextEditingController();
+  final TextEditingController _dinnerController = TextEditingController();
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _waterController = TextEditingController();
   final TextEditingController _calorieLimitController = TextEditingController();
 
+  // State variables
   int _calories = 0;
   int _calorieLimit = 2000;
   int _waterIntake = 0;
@@ -27,8 +74,9 @@ class _MealsScreenState extends State<MealsScreen> {
   List<String> _mealRecommendations = [];
 
   // Initialize PocketBase
-  final PocketBase pb = PocketBase('http://127.0.0.1:8090'); // Replace with your PocketBase URL
+  final PocketBase pb = PocketBase('http://172.25.32.1:8090'); // Replace with your PocketBase URL
 
+  // Page colors for UI
   final Map<int, Color> _pageColors = {
     0: Colors.green,
     1: Colors.orange,
@@ -36,16 +84,18 @@ class _MealsScreenState extends State<MealsScreen> {
     3: Colors.red,
     4: Colors.purple,
     5: Colors.teal,
-    6: Colors.indigo,  // Meal Templates
-    7: Colors.brown,   // Daily Meal Plan
-    8: Colors.amber,   // Healthy Snack Options
-    9: Colors.pink,    // Nutritional Comparisons
-    10: Colors.cyan,   // Micronutrient Deficiencies
+    6: Colors.indigo, // Meal Templates
+    7: Colors.brown, // Daily Meal Plan
+    8: Colors.amber, // Healthy Snack Options
+    9: Colors.pink, // Nutritional Comparisons
+    10: Colors.cyan, // Micronutrient Deficiencies
   };
 
+  // Meal categories
   final List<String> _mealCategories = ["Breakfast", "Lunch", "Dinner", "Snack"];
   String _selectedCategory = "Lunch";
 
+  // Controllers for page navigation
   late final PageController _pageController;
   late final ScrollController _bottomNavScrollController;
   late List<Widget> _pages; // Declare _pages as late
@@ -68,6 +118,7 @@ class _MealsScreenState extends State<MealsScreen> {
     _fetchCalorieLimit();
   }
 
+  // Build pages for the PageView
   List<Widget> _buildPages() {
     return [
       _buildPage(
@@ -98,20 +149,31 @@ class _MealsScreenState extends State<MealsScreen> {
               onPressed: () async {
                 if (_mealController.text.isNotEmpty && _caloriesController.text.isNotEmpty) {
                   try {
-                    await pb.collection('meals').create(body: {
-                      "name": _mealController.text,
-                      "category": _selectedCategory,
-                      "calories": int.parse(_caloriesController.text),
-                      "notes": _notesController.text,
-                      "date": DateTime.now().toIso8601String(),
-                    });
-                    _fetchMeals();
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "MEAL": _mealController.text, // Save the meal name
+                      "COURSE": _selectedCategory, // Save the selected category
+                      "CALORIES": int.parse(_caloriesController.text), // Convert calories to an integer
+                      "NOTES": _notesController.text, // Save the notes
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('ADD_MEAL').create(body: body);
+
+                    // Clear the text fields
+                    _mealController.clear();
+                    _caloriesController.clear();
+                    _notesController.clear();
+
+                    // Show a success message
                     _showSnackBar("Meal added successfully!");
                   } catch (e) {
+                    // Show an error message if something goes wrong
                     _showSnackBar("Failed to save meal: $e", color: Colors.red);
                   }
                 } else {
-                  _showSnackBar("Please fill in all fields.", color: Colors.red);
+                  // Show a message if required fields are empty
+                  _showSnackBar("Please fill in all required fields.", color: Colors.red);
                 }
               },
               child: const Text("Save Meal"),
@@ -140,14 +202,33 @@ class _MealsScreenState extends State<MealsScreen> {
             TextField(controller: _calorieLimitController, decoration: const InputDecoration(labelText: "Enter new limit"), keyboardType: TextInputType.number),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_calorieLimitController.text.isNotEmpty) {
-                  setState(() {
-                    _calorieLimit = int.parse(_calorieLimitController.text);
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "LIMIT": int.parse(_calorieLimitController.text), // Convert the text to an integer
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('SET_LIMIT').create(body: body);
+
+                    // Update the local state with the new limit
+                    setState(() {
+                      _calorieLimit = int.parse(_calorieLimitController.text);
+                    });
+
+                    // Clear the text field
                     _calorieLimitController.clear();
-                  });
-                  _showSnackBar("Calorie limit set successfully!");
+
+                    // Show a success message
+                    _showSnackBar("Calorie limit set successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to set calorie limit: $e", color: Colors.red);
+                  }
                 } else {
+                  // Show a message if the field is empty
                   _showSnackBar("Please enter a valid limit.", color: Colors.red);
                 }
               },
@@ -168,15 +249,34 @@ class _MealsScreenState extends State<MealsScreen> {
             TextField(controller: _waterController, decoration: const InputDecoration(labelText: "Enter water intake (ml)"), keyboardType: TextInputType.number),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_waterController.text.isNotEmpty) {
-                  setState(() {
-                    _waterIntake += int.parse(_waterController.text);
-                    _waterLogs.add("${_waterController.text} ml at ${DateTime.now()}");
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "INTAKE": int.parse(_waterController.text), // Convert the text to an integer
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('WATER_INTAKE').create(body: body);
+
+                    // Update the local state with the new water intake
+                    setState(() {
+                      _waterIntake += int.parse(_waterController.text);
+                      _waterLogs.add("${_waterController.text} ml at ${DateTime.now()}");
+                    });
+
+                    // Clear the text field
                     _waterController.clear();
-                  });
-                  _showSnackBar("Water intake added successfully!");
+
+                    // Show a success message
+                    _showSnackBar("Water intake added successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to save water intake: $e", color: Colors.red);
+                  }
                 } else {
+                  // Show a message if the field is empty
                   _showSnackBar("Please enter a valid amount.", color: Colors.red);
                 }
               },
@@ -201,7 +301,27 @@ class _MealsScreenState extends State<MealsScreen> {
         Icons.recommend,
         "Get personalized meal suggestions.",
         Column(
-          children: _mealRecommendations.map((meal) => Text(meal, style: const TextStyle(fontSize: 16))).toList(),
+          children: [
+            // Display random meal recommendations
+            if (_selectedIndex == 3) ...[
+              Text("🍳 Breakfast: ${_getRandomRecommendation(_breakfastRecommendations)}"),
+              const SizedBox(height: 10),
+              Text("🍱 Lunch: ${_getRandomRecommendation(_lunchRecommendations)}"),
+              const SizedBox(height: 10),
+              Text("🍎 Snack: ${_getRandomRecommendation(_snackRecommendations)}"),
+              const SizedBox(height: 10),
+              Text("🍽 Dinner: ${_getRandomRecommendation(_dinnerRecommendations)}"),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    // Regenerate recommendations
+                  });
+                },
+                child: const Text("Refresh Recommendations"),
+              ),
+            ],
+          ],
         ),
         _pageColors[4]!,
       ),
@@ -245,11 +365,36 @@ class _MealsScreenState extends State<MealsScreen> {
         "Save your favorite meals as templates.",
         Column(
           children: [
-            Text("1. Chicken Stir Fry", style: const TextStyle(fontSize: 16)),
-            Text("2. Veggie Wrap", style: const TextStyle(fontSize: 16)),
-            Text("3. Smoothie Bowl", style: const TextStyle(fontSize: 16)),
+            TextField(controller: _templateController, decoration: const InputDecoration(labelText: "Enter Template")),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: () {}, child: const Text("Save Current Meal as Template")),
+            ElevatedButton(
+              onPressed: () async {
+                if (_templateController.text.isNotEmpty) {
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "TEMPLATE": _templateController.text, // Save the template text
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('TEMPLATE').create(body: body);
+
+                    // Clear the text field
+                    _templateController.clear();
+
+                    // Show a success message
+                    _showSnackBar("Meal template saved successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to save meal template: $e", color: Colors.red);
+                  }
+                } else {
+                  // Show a message if the field is empty
+                  _showSnackBar("Please enter a valid template.", color: Colors.red);
+                }
+              },
+              child: const Text("Save Current Meal as Template"),
+            ),
           ],
         ),
         _pageColors[2]!,
@@ -260,11 +405,45 @@ class _MealsScreenState extends State<MealsScreen> {
         "View and customize your daily meal plan.",
         Column(
           children: [
-            Text("Breakfast: Oatmeal with Fruits", style: const TextStyle(fontSize: 16)),
-            Text("Lunch: Grilled Chicken Salad", style: const TextStyle(fontSize: 16)),
-            Text("Dinner: Quinoa and Vegetables", style: const TextStyle(fontSize: 16)),
+            TextField(controller: _breakfastController, decoration: const InputDecoration(labelText: "Enter Breakfast")),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: () {}, child: const Text("Customize Meal Plan")),
+            TextField(controller: _lunchController, decoration: const InputDecoration(labelText: "Enter Lunch")),
+            const SizedBox(height: 10),
+            TextField(controller: _dinnerController, decoration: const InputDecoration(labelText: "Enter Dinner")),
+            const SizedBox(height: 10),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                if (_breakfastController.text.isNotEmpty || _lunchController.text.isNotEmpty || _dinnerController.text.isNotEmpty) {
+                  try {
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "BREAKFAST": _breakfastController.text,
+                      "LUNCH": _lunchController.text,
+                      "DINNER": _dinnerController.text,
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('DAILY_MEAL').create(body: body);
+
+                    // Clear the text fields
+                    _breakfastController.clear();
+                    _lunchController.clear();
+                    _dinnerController.clear();
+
+                    // Show a success message
+                    _showSnackBar("Daily meal plan saved successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to save daily meal plan: $e", color: Colors.red);
+                  }
+                } else {
+                  // Show a message if all fields are empty
+                  _showSnackBar("Please fill in at least one field.", color: Colors.red);
+                }
+              },
+              child: const Text("Customize Meal Plan"),
+            ),
           ],
         ),
         _pageColors[3]!,
@@ -309,6 +488,7 @@ class _MealsScreenState extends State<MealsScreen> {
     ];
   }
 
+  // Fetch meals from PocketBase
   Future<void> _fetchMeals() async {
     try {
       final result = await pb.collection('meals').getFullList();
@@ -321,6 +501,7 @@ class _MealsScreenState extends State<MealsScreen> {
     }
   }
 
+  // Fetch meal recommendations from PocketBase
   Future<void> _fetchMealRecommendations() async {
     try {
       final result = await pb.collection('meal_recommendations').getFullList();
@@ -332,6 +513,7 @@ class _MealsScreenState extends State<MealsScreen> {
     }
   }
 
+  // Fetch water logs from PocketBase
   Future<void> _fetchWaterLogs() async {
     try {
       final result = await pb.collection('water_intake').getFullList();
@@ -345,6 +527,7 @@ class _MealsScreenState extends State<MealsScreen> {
     }
   }
 
+  // Fetch calorie limit from PocketBase
   Future<void> _fetchCalorieLimit() async {
     try {
       final result = await pb.collection('calorie_limit').getFullList();
@@ -358,6 +541,7 @@ class _MealsScreenState extends State<MealsScreen> {
     }
   }
 
+  // Show a snackbar with a message
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -368,6 +552,7 @@ class _MealsScreenState extends State<MealsScreen> {
     );
   }
 
+  // Build a meal card widget
   Widget _mealCard(Map<String, dynamic> meal) {
     return Card(
       elevation: 4,
@@ -388,6 +573,7 @@ class _MealsScreenState extends State<MealsScreen> {
     );
   }
 
+  // Build a page widget
   Widget _buildPage(String title, IconData icon, String description, Widget child, Color color) {
     return Container(
       color: color.withOpacity(0.1),
@@ -417,6 +603,7 @@ class _MealsScreenState extends State<MealsScreen> {
     );
   }
 
+  // Handle bottom navigation bar item taps
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -467,6 +654,7 @@ class _MealsScreenState extends State<MealsScreen> {
   }
 }
 
+// Custom bottom navigation bar widget
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -507,6 +695,7 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
+  // Build a navigation item widget
   Widget _buildNavItem(IconData icon, String label, int index, Color color) {
     return GestureDetector(
       onTap: () => onItemTapped(index),
