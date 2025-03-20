@@ -66,14 +66,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   int _totalTimeSpent = 0; // Time spent in seconds
   final List<Map<String, dynamic>> _savedExercises = [];
   final List<String> _exerciseRecommendations = [
-    "🏋️‍♂️ Weightlifting",
-    "🏃‍♂️ Running",
-    "🚴‍♂️ Cycling",
-    "🧘‍♀️ Yoga",
-    "🏊‍♂️ Swimming",
-    "🤸‍♀️ Pilates",
+    "🏋‍♂ Weightlifting",
+    "🏃‍♂ Running",
+    "🚴‍♂ Cycling",
+    "🧘‍♀ Yoga",
+    "🏊‍♂ Swimming",
+    "🤸‍♀ Pilates",
     "🥊 Boxing",
-    "🤼‍♂️ Wrestling"
+    "🤼‍♂ Wrestling"
   ];
 
   // Timer-related variables
@@ -96,7 +96,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   String _selectedCategory = "Cardio";
 
   // Initialize PocketBase
-  final pb = PocketBase('http://10.12.233.180:8090');
+  final pb = PocketBase('http://192.168.94.20:8090');
 
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +118,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("🏋️‍♂️ Category: ${exercise["category"]}"),
+            Text("🏋‍♂ Category: ${exercise["category"]}"),
             Text("🔥 ${exercise["calories"]} kcal burned"),
             if (exercise["notes"].isNotEmpty) Text("📝 Notes: ${exercise["notes"]}"),
             Text("⏱ Time Spent: ${exercise["time"]} minutes"),
@@ -268,14 +268,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-                onPressed: () {
-                  if (_isTimerRunning) {
-                    _stopTimer();
-                  } else {
-                    _startTimer();
-                  }
-                },
-                child: Text(_isTimerRunning ? "Stop" : "Click here"),
+              onPressed: () {
+                if (_isTimerRunning) {
+                  _stopTimer();
+                } else {
+                  _startTimer();
+                }
+              },
+              child: Text(_isTimerRunning ? "Stop" : "Click here"),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
