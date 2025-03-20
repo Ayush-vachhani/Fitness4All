@@ -62,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
@@ -94,15 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(builder: (context) => const MealsScreen()),
                     ),
                   ),
-                  _buildCategoryItem(
-                    context,
-                    "assets/img/data.png",
-                    "Personalized\nInsights and Recommendations",
-                        () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    ),
-                  ),
+
                 ],
               ),
             ),

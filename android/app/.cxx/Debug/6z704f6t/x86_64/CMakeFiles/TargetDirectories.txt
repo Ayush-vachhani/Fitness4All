@@ -1,0 +1,2 @@
+C:/Users/surya/Desktop/1/Fitness4All/android/app/.cxx/Debug/6z704f6t/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/surya/Desktop/1/Fitness4All/android/app/.cxx/Debug/6z704f6t/x86_64/CMakeFiles/rebuild_cache.dir
