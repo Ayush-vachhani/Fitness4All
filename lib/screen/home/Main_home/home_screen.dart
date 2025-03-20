@@ -1,6 +1,7 @@
 import 'package:fitness4all/common/color_extensions.dart';
 
 import 'package:fitness4all/screen/home/Main_home/fav.dart';
+import 'package:fitness4all/screen/home/Main_home/garph.dart';
 
 import 'package:fitness4all/screen/home/Main_home/line_chart.dart';
 import 'package:fitness4all/screen/home/Main_home/plus_button.dart';
@@ -189,7 +190,12 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.add_chart),
               color: Colors.white,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ReportsScreen()),
+                );
+              },
             ),
             const SizedBox(width: 50),
             IconButton(
