@@ -31,9 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
   pocketbase: ^0.22.0
-  mockito: ^5.4.5
+  elegant_notification: ^2.4.3
+  fluttertoast: ^8.2.2
+
   otp_text_field_v2: ^1.0.0
   otp_timer_button: ^1.0.0
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -47,6 +50,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mockito: ^5.4.5
+  build_runner: ^2.1.11
+  very_good_analysis: ^7.0.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

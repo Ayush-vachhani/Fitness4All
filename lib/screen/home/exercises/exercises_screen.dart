@@ -2,6 +2,10 @@ import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/screen/home/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart'; // Add this import
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'dart:math';
 
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key});
@@ -20,7 +24,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   final TextEditingController _MorningController = TextEditingController();
   final TextEditingController _EveningController = TextEditingController();
   final TextEditingController _AfternoonController = TextEditingController();
-
+  final TextEditingController _stressController = TextEditingController();
 
   void _startTimer() {
     setState(() {
@@ -76,6 +80,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     "🤼‍♂ Wrestling"
   ];
 
+  List<String> _getTwoRandomExercises() {
+    if (_exerciseRecommendations.isEmpty) return ["No recommendations available."];
+    final random = Random();
+    // Shuffle the list and take the first 2 items
+    return (_exerciseRecommendations..shuffle(random)).take(2).toList();
+  }
+
   // Timer-related variables
   bool _isTimerRunning = false; // Tracks if the timer is running
   DateTime? _startTime; // Stores the start time of the timer
@@ -96,7 +107,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   String _selectedCategory = "Cardio";
 
   // Initialize PocketBase
-  final pb = PocketBase('http://192.168.94.20:8090');
+  final pb = PocketBase('http://10.12.233.180:8090');
 
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -292,7 +303,32 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         ),
         _pageColors[1]!,
       ),
+      _buildPage(
+        "Exercise Recommendations",
+        Icons.recommend,
+        "Get personalized exercise suggestions.",
+        Column(
+          children: [
+            const SizedBox(height: 10),
+            Text(
+              "Here are some exercises for you:",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _pageColors[2]!.withOpacity(0.8),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ..._getTwoRandomExercises().map((exercise) => Text(
+              exercise,
+              style: const TextStyle(fontSize: 16),
+            )),
+            const SizedBox(height: 20),
 
+          ],
+        ),
+        _pageColors[2]!,
+      ),
 
       _buildPage(
         "Exercise Recommendations",
@@ -392,7 +428,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
                     // Create the record in PocketBase
                     final record = await pb.collection('DailyExercisePlan').create(body: body);
-
+                    _MorningController.clear();
+                    _AfternoonController.clear();
+                    _EveningController.clear();
                     // Show a success message
                     _showSnackBar("Daily exercise plan saved successfully!");
                   } catch (e) {
@@ -409,6 +447,70 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ],
         ),
         _pageColors[5]!,
+      ),
+      _buildPage(
+        "Log your Stress Level",
+        Icons.auto_graph_outlined,
+        "On a scale of 1 to 10 how stressed are you",
+        Column(
+          children: [
+            Text("⏱ Please add your stress level here", style: const TextStyle(fontSize: 15)),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _stressController,
+              decoration: const InputDecoration(labelText: "Enter stress level (1-10)"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                if (_stressController.text.isNotEmpty) {
+                  try {
+                    int stressLevel = int.parse(_stressController.text);
+
+                    // Show a toast notification if the stress level is above 6
+                    if (stressLevel > 6) {
+                      Fluttertoast.showToast(
+                        msg: "Your stress level is $stressLevel. Consider taking a break or practicing relaxation techniques.",
+                        toastLength: Toast.LENGTH_LONG, // Duration: LENGTH_SHORT (2s) or LENGTH_LONG (3.5s)
+                        gravity: ToastGravity.BOTTOM, // Position of the toast
+                        backgroundColor: Colors.green, // Background color
+                        textColor: Colors.white, // Text color
+                      );
+                    }
+
+                    // Create the body for the PocketBase record
+                    final body = <String, dynamic>{
+                      "stress_level": stressLevel, // Convert the input to an integer
+                    };
+
+                    // Create the record in PocketBase
+                    final record = await pb.collection('StressLevel').create(body: body);
+
+                    // Update the local state (if needed)
+                    setState(() {
+                      // If you need to store the stress level locally, you can do so here.
+                      // For example:
+                      // _stressLevel = stressLevel;
+                      _stressController.clear(); // Clear the input field
+                    });
+
+                    // Show a success message
+                    _showSnackBar("Stress level logged successfully!");
+                  } catch (e) {
+                    // Show an error message if something goes wrong
+                    _showSnackBar("Failed to log stress level: $e", color: Colors.red);
+                  }
+                } else {
+                  // Show a message if the field is empty
+                  _showSnackBar("Please enter a valid scale.", color: Colors.red);
+                }
+              },
+              child: const Text("Log Stress Level"),
+            ),
+          ],
+        ),
+        _pageColors[0]!,
       ),
     ];
   }
@@ -437,6 +539,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     _timeController.dispose();
     _pageController.dispose();
     _bottomNavScrollController.dispose();
+    _stressController.dispose();
     super.dispose();
   }
 
@@ -444,7 +547,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Exercise Tracker"),
+        title: const Text("Exercise and Health Tracker"),
         backgroundColor: _pageColors[_selectedIndex] ?? Colors.blue,
         centerTitle: true,
         actions: [
@@ -508,6 +611,8 @@ class CustomBottomNavBar extends StatelessWidget {
             _buildNavItem(Icons.timer, "Time Setter", 3, Colors.red),
             _buildNavItem(Icons.save, "Templates", 4, Colors.purple),
             _buildNavItem(Icons.calendar_today, "Daily Plan", 5, Colors.teal),
+            _buildNavItem(Icons.auto_graph_outlined, "Stress Level", 6, Colors.green),
+
           ],
         ),
       ),
