@@ -46,7 +46,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
             // Existing report cards
             _buildReportCard("Caloric Progress", _buildPieChart()),
-            _buildReportCard("Progress", _buildLineChart()),
+            _buildReportCard("Water intake progress", _buildLineChart()),
           ],
         ),
       ),
@@ -82,8 +82,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           child: PieChart(
             PieChartData(
               sections: [
-                PieChartSectionData(value: 120, title: "Completed", color: Colors.green, radius: 65),
-                PieChartSectionData(value: 25, title: "Pending", color: Colors.red, radius: 55),
+                PieChartSectionData(value: 2000, title: "Completed", color: Colors.green, radius: 65),
+                PieChartSectionData(value: 1600, title: "Pending", color: Colors.red, radius: 55),
               ],
               centerSpaceRadius: 45,
               sectionsSpace: 3,
@@ -110,8 +110,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               color: Colors.blue,
               barWidth: 3,
               spots: [
-                FlSpot(1, 200), FlSpot(2, 400), FlSpot(3, 500),
-                FlSpot(4, 700), FlSpot(5, 650), FlSpot(6, 800),
+                FlSpot(1, 100), FlSpot(2, 500), FlSpot(3, 500),
+                FlSpot(4, 600), FlSpot(5, 650), FlSpot(6, 800),
               ],
             ),
           ],

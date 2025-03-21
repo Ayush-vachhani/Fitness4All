@@ -25,43 +25,61 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   final TextEditingController _EveningController = TextEditingController();
   final TextEditingController _AfternoonController = TextEditingController();
   final TextEditingController _stressController = TextEditingController();
+  final TextEditingController _templateController = TextEditingController();
+
 
   void _startTimer() {
     setState(() {
       _isTimerRunning = true; // Set the timer state to running
       _startTime = DateTime.now(); // Record the start time
-      print("Timer started at: $_startTime");
+      // print("Timer started at: $_startTime");
     });
   }
+  void _stopTimer() async {
+    double caloriesBurned = 0;
 
-  void _stopTimer() {
     setState(() {
-      _isTimerRunning = false; // Set the timer state to stopped
-      _endTime = DateTime.now(); // Record the end time
+      _isTimerRunning = false;
+      _endTime = DateTime.now();
 
       if (_startTime != null && _endTime != null) {
-        // Calculate the time difference in seconds
         _timeDifference = _endTime!.difference(_startTime!).inSeconds;
 
-        // Update total time spent (accumulate previous time differences)
         _totalTimeSpent += _timeDifference;
 
-        // Calculate calories burned (time difference * 0.017)
-        double caloriesBurned = _timeDifference * 0.017;
+        caloriesBurned = _timeDifference * 17;
 
-        // Update total calories burned (accumulate previous calories burned)
-        _totalCaloriesBurned += caloriesBurned.round(); // Round to the nearest integer
+        _totalCaloriesBurned += caloriesBurned.round();
 
-        // Show a snackbar with the results
         _showSnackBar(
           "Timer stopped! Time spent: $_timeDifference seconds, Calories burned: ${caloriesBurned.toStringAsFixed(2)} kcal",
         );
-
-        // Debugging: Print the updated values
-        print("Total Calories Burned: $_totalCaloriesBurned");
-        print("Total Time Spent: $_totalTimeSpent");
       }
     });
+
+    // Debugging output
+    print("Start Time: $_startTime");
+    print("End Time: $_endTime");
+
+    if (_startTime != null && _endTime != null) {
+      // Prepare the body for the PocketBase record
+      final body = <String, dynamic>{
+        "time_diff": _timeDifference, // Use the calculated time difference
+        "gram_calorie": caloriesBurned.round(), // Use the calculated calories
+        "time_start": _startTime!.toIso8601String(), // Map _startTime to time_start
+        "time_end": _endTime!.toIso8601String(),     // Map _endTime to time_end
+      };
+
+      try {
+        // Send the data to PocketBase
+        final record = await pb.collection('TimeToCal').create(body: body);
+        _showSnackBar("Timer data logged successfully!");
+      } catch (e) {
+        _showSnackBar("Failed to log timer data: $e", color: Colors.red);
+      }
+    } else {
+      _showSnackBar("Error: Start time or end time is null.", color: Colors.red);
+    }
   }
 
   // Local variables to store exercise data
@@ -107,7 +125,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   String _selectedCategory = "Cardio";
 
   // Initialize PocketBase
-  final pb = PocketBase('http://10.12.233.180:8090');
+  final pb = PocketBase('http://10.12.233.180:8090'); // 10.12.233.180
 
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -289,16 +307,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               child: Text(_isTimerRunning ? "Stop" : "Click here"),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _totalCaloriesBurned = 0;
-                  _totalTimeSpent = 0;
-                });
-                _showSnackBar("Calories and time reset!", color: Colors.red);
-              },
-              child: const Text("Reset Data"),
-            ),
           ],
         ),
         _pageColors[1]!,
@@ -330,15 +338,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         _pageColors[2]!,
       ),
 
-      _buildPage(
-        "Exercise Recommendations",
-        Icons.recommend,
-        "Get personalized exercise suggestions.",
-        Column(
-          children: _exerciseRecommendations.map((exercise) => Text(exercise, style: const TextStyle(fontSize: 16))).toList(),
-        ),
-        _pageColors[2]!,
-      ),
+
       _buildPage(
         "Time Setter",
         Icons.timer,
@@ -387,15 +387,35 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       _buildPage(
         "Exercise Templates",
         Icons.save,
-        "Save your favorite exercises as templates.",
-        Column(
-          children: [
-            Text("1. Push-ups", style: const TextStyle(fontSize: 16)),
-            Text("2. Squats", style: const TextStyle(fontSize: 16)),
-            Text("3. Plank", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 10),
-            ElevatedButton(onPressed: () {}, child: const Text("Save Current Exercise as Template")),
-          ],
+        "Save your favorite exercise as templates.",
+        SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(controller: _templateController, decoration: const InputDecoration(labelText: "Enter Template")),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_templateController.text.isNotEmpty) {
+                    try {
+                      final body = <String, dynamic>{
+                        "templates": _templateController.text,
+                        "day": "Friday"
+
+                      };
+                      await pb.collection('ExerciseTemplates').create(body: body);
+                      _templateController.clear();
+                      _showSnackBar("Exercise template saved successfully!");
+                    } catch (e) {
+                      _showSnackBar("Failed to save exercise template: $e", color: Colors.red);
+                    }
+                  } else {
+                    _showSnackBar("Please enter a valid template.", color: Colors.red);
+                  }
+                },
+                child: const Text("Save Current Exercise as Template"),
+              ),
+            ],
+          ),
         ),
         _pageColors[4]!,
       ),
