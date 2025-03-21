@@ -1,5 +1,11 @@
 
+import 'package:fitness4all/screen/home/Main_home/garph.dart';
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
+import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
+import 'package:fitness4all/screen/home/Meals/meals_screen_temp.dart';
+import 'package:fitness4all/screen/home/exercises/exercise_screen_temp.dart';
+import 'package:fitness4all/screen/home/exercises/exercises_screen.dart';
+import 'package:fitness4all/screen/home/notification/notification_screen.dart';
 import 'package:flutter/material.dart';
 
 
@@ -35,7 +41,7 @@ class AddButtonCode extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.supervisor_account, size: 50,
+                      Icon(Icons.add, size: 50,
                           color: Colors.blue),
                       SizedBox(width: 15),
                       Column(
@@ -65,15 +71,27 @@ class AddButtonCode extends StatelessWidget {
                 children: [
                   _buildTile(context, "Add Exercise", Icons.assignment,
                       Colors.orange, () {
-                        // Add navigation for Assign Requests screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ExerciseScreen()),
+                        );
+
                       }),
                   _buildTile(
                       context, "Add Meals", Icons.food_bank, Colors.green, () {
-                    // Add navigation for Reports screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MealsScreen()),
+                    );
+
                   }),
                   _buildTile(context, "Notifications", Icons.notifications,
                       Colors.red, () {
-                        // Add navigation for Notifications screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => NotificationScreen()),
+                        );
+
                       }),
                   _buildTile(
                     context,
@@ -83,7 +101,7 @@ class AddButtonCode extends StatelessWidget {
                         () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                        MaterialPageRoute(builder: (context) => MealsScreenTem()),
                       );
                     },
                   ),
@@ -92,23 +110,15 @@ class AddButtonCode extends StatelessWidget {
                   _buildTile(context, "Manage Exercise Templates",
                       Icons.calendar_today, Colors.blueGrey, () {
                         Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => HomeScreen()));
+                            builder: (context) => ExerciseScreenTem()));
                       }),
                   _buildTile(context, "Performance View", Icons.pie_chart,
                       Colors.green, () {
                         Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => HomeScreen()));
+                            builder: (context) => ReportsScreen()));
                       }),
-                  _buildTile(context, "Recommendations", Icons.recommend,
-                      Colors.orange, () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => HomeScreen()));
-                      }),
-                  _buildTile(context, "Contact us", Icons.emergency,
-                      Colors.redAccent, () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => HomeScreen()));
-                      }),
+
+
                 ],
               ),
             ),
