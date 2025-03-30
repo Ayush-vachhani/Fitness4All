@@ -1,8 +1,8 @@
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/common_widgets/round_button.dart';
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
-import 'package:fitness4all/screen/home/settings/settings_screen.dart';
-import 'package:fitness4all/screen/login/sign_up_screen.dart';
+import 'package:fitness4all/screen/login/registration_screen.dart';
+
 import 'package:flutter/material.dart';
 
 class OnBoardingScreen extends StatefulWidget {
@@ -65,7 +65,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 fontWeight: FontWeight.w300,
                 type: RoundButtonType.line,
                 onPressed: () {
-                  context.push( HomeScreen());
+                  context.push( const HomeScreen());
                 }),
           )
         ],
@@ -147,7 +147,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                     onPressed: () {
                       if (selectPage >= 3) {
                         //Next Screen
-                          context.push(const SignUpScreen());
+                          context.push(RegisterScreen());
                       } else {
                         selectPage = selectPage + 1;
                         controller.animateToPage(

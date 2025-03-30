@@ -1,70 +1,99 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:fitness4all/common_widgets/round_button.dart';
-import 'package:fitness4all/screen/login/physique_screen.dart';
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
+import 'package:fitness4all/services/auth_service.dart';
+import 'package:fitness4all/screen/login/login_screen.dart';
 
-class GoalScreen extends StatefulWidget {
-  const GoalScreen({super.key});
+class SelectGoalScreen extends StatefulWidget {
+  final String email;
+  final String password;
+  final String username;
+  final String age;
+  final String height;
+  final String weight;
+  final String level;
+
+  SelectGoalScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+    required this.age,
+    required this.height,
+    required this.weight,
+    required this.level,
+  });
 
   @override
-  State<GoalScreen> createState() => _GoalScreenState();
+  _SelectGoalScreenState createState() => _SelectGoalScreenState();
 }
 
-class _GoalScreenState extends State<GoalScreen> {
+class _SelectGoalScreenState extends State<SelectGoalScreen> {
+  final _goalController = TextEditingController();
+  bool _isLoading = false;
+  String _errorMessage = '';
 
-  String selectName = "";
+  void _register() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final email = widget.email;
+    final password = widget.password;
+    final username = widget.username;
+    final age = widget.age;
+    final height = widget.height;
+    final weight = widget.weight;
+    final level = widget.level;
+    final goal = _goalController.text;
+
+    try {
+      await AuthService.register(email, password, username, age, height, weight, level, goal, image);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to register: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                height: 30,
+      appBar: AppBar(
+        title: Text('Select Goal'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _goalController,
+              decoration: InputDecoration(labelText: 'Goal'),
+            ),
+            SizedBox(height: 20),
+            if (_isLoading)
+              CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: _register,
+                child: Text('Register'),
               ),
-              Text(
-                "Select Your Goal",
-                style: TextStyle(
-                  color: TColor.primaryText,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Text(
+                  _errorMessage,
+                  style: TextStyle(color: Colors.red),
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              Column(
-                children: ["Fat Loss", "Weight Gain", "Muscle Gain", "Others"]
-                    .map((name) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: RoundSelectButton(title: name, type: RoundButtonType.line, isPadding: false,
-                        image: selectName == name ? "assets/img/radio_select.png" : "assets/img/radio_unselect.png" ,
-                        onPressed: (){
-
-                          setState(() {
-                            selectName = name;
-                          });
-
-                        }),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              RoundButton(title: "DONE", isPadding: false, onPressed: () {
-                context.push(const PhysiqueScreen());
-              }),
-              const Spacer()
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
-}
+}*/
