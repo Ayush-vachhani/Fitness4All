@@ -1,22 +1,23 @@
 import 'package:fitness4all/common/color_extensions.dart';
 import 'package:flutter/material.dart';
 
-
 class SettingRow extends StatelessWidget {
   final String title;
   final String icon;
   final String value;
   final bool isIconCircle;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final Widget? trailing;
 
   const SettingRow({
-    super.key,
+    Key? key,
     required this.title,
     required this.icon,
     this.value = "",
     this.isIconCircle = false,
-    required this.onPressed,
-  });
+    this.onPressed,
+    this.trailing,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +66,10 @@ class SettingRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            if (trailing != null) trailing!,
           ],
         ),
       ),
     );
   }
 }
-
-

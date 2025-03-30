@@ -1,113 +1,62 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fitness4all/screen/login/select_weight_screen.dart';
 
 class SelectHeightScreen extends StatefulWidget {
-  final Function(dynamic) didChange;
-  const SelectHeightScreen({super.key, required this.didChange});
+  final String email;
+  final String password;
+  final String username;
+  final String age;
+
+  SelectHeightScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+    required this.age,
+  });
 
   @override
-  State<SelectHeightScreen> createState() => _SelectHeightScreenState();
+  _SelectHeightScreenState createState() => _SelectHeightScreenState();
 }
 
 class _SelectHeightScreenState extends State<SelectHeightScreen> {
-  List valueFtArr = [];
-  List valueInchArr = [];
+  final _heightController = TextEditingController();
 
-  int selectFt = 0;
-  int selectInch = 0;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    for (var i = 2; i < 11; i++) {
-      valueFtArr.add({"name": "$i Ft", "value": i});
-    }
-
-    for (var i = 0; i < 12; i++) {
-      valueInchArr.add({"name": "$i Inch", "value": i});
-    }
+  void _next() {
+    final height = _heightController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectWeightScreen(
+          email: widget.email,
+          password: widget.password,
+          username: widget.username,
+          age: widget.age,
+          height: height,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: context.width,
-      height: context.height,
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: Container(
-        width: context.width * 0.6,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(
-            20,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Select Height'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "Select your Height",
-              style: TextStyle(
-                color: TColor.primaryText,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+            TextField(
+              controller: _heightController,
+              decoration: InputDecoration(labelText: 'Height (cm)'),
+              keyboardType: TextInputType.number,
             ),
-            const SizedBox(
-              height: 25,
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _next,
+              child: Text('Next'),
             ),
-            SizedBox(
-              height: 200,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 32,
-                      onSelectedItemChanged: (value) {
-                        selectFt = value;
-                        widget.didChange({
-                          "ft": valueFtArr[selectFt]["name"],
-                          "inch": valueInchArr[selectInch]["name"],
-                        });
-                      },
-                      children:
-                      List<Widget>.generate(valueFtArr.length, (index) {
-                        var obj = valueFtArr[index];
-
-                        return Text("${obj["name"]}");
-                      }),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 15,
-                  ),
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 32,
-                      onSelectedItemChanged: (value) {
-                        selectInch = value;
-                        widget.didChange({
-                          "ft": valueFtArr[selectFt]["name"],
-                          "inch": valueInchArr[selectInch]["name"],
-                        });
-                      },
-                      children:
-                      List<Widget>.generate(valueFtArr.length, (index) {
-                        var obj = valueInchArr[index];
-
-                        return Text("${obj["name"]}");
-                      }),
-                    ),
-                  )
-                ],
-              ),
-            )
           ],
         ),
       ),

@@ -1,79 +1,65 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fitness4all/screen/login/select_level_screen.dart';
 
 class SelectWeightScreen extends StatefulWidget {
-  final Function(dynamic) didChange;
-  const SelectWeightScreen({super.key, required this.didChange});
+  final String email;
+  final String password;
+  final String username;
+  final String age;
+  final String height;
+
+  SelectWeightScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+    required this.age,
+    required this.height,
+  });
 
   @override
-  State<SelectWeightScreen> createState() => _SelectWeightScreenState();
+  _SelectWeightScreenState createState() => _SelectWeightScreenState();
 }
 
 class _SelectWeightScreenState extends State<SelectWeightScreen> {
-  List valueArr = [];
+  final _weightController = TextEditingController();
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    for (var i = 35; i < 150; i++) {
-      valueArr.add({"name": "$i KG", "value": i});
-    }
+  void _next() {
+    final weight = _weightController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectLevelScreen(
+          email: widget.email,
+          password: widget.password,
+          username: widget.username,
+          age: widget.age,
+          height: widget.height,
+          weight: weight,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: context.width,
-      height: context.height,
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: Container(
-        width: context.width * 0.6,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(
-            20,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Select Weight'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "Select your Weight",
-              style: TextStyle(
-                color: TColor.primaryText,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+            TextField(
+              controller: _weightController,
+              decoration: InputDecoration(labelText: 'Weight (kg)'),
+              keyboardType: TextInputType.number,
             ),
-            const SizedBox(
-              height: 25,
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _next,
+              child: Text('Next'),
             ),
-            SizedBox(
-              height: 200,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 32,
-                      onSelectedItemChanged: (value) {
-                        widget.didChange(valueArr[value]["name"]);
-                      },
-                      children: List<Widget>.generate(valueArr.length, (index) {
-                        var obj = valueArr[index];
-
-                        return Text("${obj["name"]}");
-                      }),
-                    ),
-                  )
-                ],
-              ),
-            )
           ],
         ),
       ),

@@ -1,76 +1,67 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:fitness4all/common_widgets/radio_button.dart';
+import 'package:fitness4all/screen/login/goal_screen.dart';
 import 'package:flutter/material.dart';
 
 class SelectLevelScreen extends StatefulWidget {
-  final Function(dynamic) didChange;
-  const SelectLevelScreen({super.key, required this.didChange});
+  final String email;
+  final String password;
+  final String username;
+  final String age;
+  final String height;
+  final String weight;
+
+  SelectLevelScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+    required this.age,
+    required this.height,
+    required this.weight,
+  });
 
   @override
-  State<SelectLevelScreen> createState() => _SelectLevelScreenState();
+  _SelectLevelScreenState createState() => _SelectLevelScreenState();
 }
 
 class _SelectLevelScreenState extends State<SelectLevelScreen> {
-  int selectType = 0;
+  final _levelController = TextEditingController();
+
+  void _next() {
+    final level = _levelController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectGoalScreen(
+          email: widget.email,
+          password: widget.password,
+          username: widget.username,
+          age: widget.age,
+          height: widget.height,
+          weight: widget.weight,
+          level: level,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: context.width,
-      height: context.height,
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: Container(
-        width: context.width * 0.6,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(
-            20,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Select Level'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "Select your Level",
-              style: TextStyle(
-                color: TColor.primaryText,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+            TextField(
+              controller: _levelController,
+              decoration: InputDecoration(labelText: 'Level'),
             ),
-            const SizedBox(
-              height: 25,
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _next,
+              child: Text('Next'),
             ),
-            RadioButton(
-                title: "Beginner",
-                isSelect: selectType == 0,
-                onPressed: () {
-                  setState(() {
-                    selectType = 0;
-                  });
-                  widget.didChange("Beginner");
-                }),
-            RadioButton(
-                title: "Intermediate",
-                isSelect: selectType == 1,
-                onPressed: () {
-                  setState(() {
-                    selectType = 1;
-                  });
-                  widget.didChange("Intermediate");
-                }),
-            RadioButton(
-                title: "Advance",
-                isSelect: selectType == 2,
-                onPressed: () {
-                  setState(() {
-                    selectType = 2;
-                  });
-                  widget.didChange("Advance");
-                })
           ],
         ),
       ),

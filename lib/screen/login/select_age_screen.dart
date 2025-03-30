@@ -1,79 +1,59 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fitness4all/screen/login/select_height_screen.dart';
 
 class SelectAgeScreen extends StatefulWidget {
-  final Function(dynamic) didChange;
-  const SelectAgeScreen({super.key, required this.didChange});
+  final String email;
+  final String password;
+  final String username;
+
+  SelectAgeScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+  });
 
   @override
-  State<SelectAgeScreen> createState() => _SelectAgeScreenState();
+  _SelectAgeScreenState createState() => _SelectAgeScreenState();
 }
 
 class _SelectAgeScreenState extends State<SelectAgeScreen> {
-  List valueArr = [];
+  final _ageController = TextEditingController();
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    for (var i = 1; i < 120; i++) {
-      valueArr.add({"name": "$i", "value": i});
-    }
+  void _next() {
+    final age = _ageController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectHeightScreen(
+          email: widget.email,
+          password: widget.password,
+          username: widget.username,
+          age: age,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: context.width,
-      height: context.height,
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: Container(
-        width: context.width * 0.6,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(
-            20,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Select Age'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "Select your Age",
-              style: TextStyle(
-                color: TColor.primaryText,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+            TextField(
+              controller: _ageController,
+              decoration: InputDecoration(labelText: 'Age'),
+              keyboardType: TextInputType.number,
             ),
-            const SizedBox(
-              height: 25,
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _next,
+              child: Text('Next'),
             ),
-            SizedBox(
-              height: 200,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 32,
-                      onSelectedItemChanged: (value) {
-                        widget.didChange(valueArr[value]["name"]);
-                      },
-                      children: List<Widget>.generate(valueArr.length, (index) {
-                        var obj = valueArr[index];
-
-                        return Text("${obj["name"]}");
-                      }),
-                    ),
-                  )
-                ],
-              ),
-            )
           ],
         ),
       ),
