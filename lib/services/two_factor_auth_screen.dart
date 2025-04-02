@@ -21,7 +21,9 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
         const SnackBar(content: Text('2FA verified successfully.')),
       );
       Navigator.pop(context);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error verifying 2FA: $e');
+      debugPrintStack(stackTrace: stackTrace);
       setState(() {
         _errorMessage = e.toString();
       });

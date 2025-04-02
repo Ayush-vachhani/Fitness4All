@@ -1,13 +1,13 @@
-import 'package:fitness4all/common/color_extensions.dart';
-import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
-import 'package:fitness4all/screen/home/notification/notification_screen.dart';
-import 'package:fitness4all/screen/home/reminder/reminder_screen.dart';
-import 'package:fitness4all/services/theme_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:fitness4all/services/theme_provider.dart';
+import 'package:fitness4all/services/auth_service.dart';
 import 'package:fitness4all/screen/home/settings/setting_row.dart';
 import 'package:fitness4all/screen/home/settings/profile_screen.dart';
-import 'package:fitness4all/services/auth_service.dart';
-import 'package:provider/provider.dart';
+import 'package:fitness4all/screen/home/notification/notification_screen.dart';
+import 'package:fitness4all/screen/home/reminder/reminder_screen.dart';
+import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
+import 'package:fitness4all/common/color_extensions.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -51,7 +51,7 @@ class _SettingScreenState extends State<SettingScreen> {
   Widget build(BuildContext context) {
     final user = AuthService.userDetails;
     final themeProvider = Provider.of<ThemeProvider>(context);
-    bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    bool isDarkMode = themeProvider.isDarkMode;
 
     return Scaffold(
       appBar: AppBar(

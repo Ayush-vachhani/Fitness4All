@@ -1,18 +1,13 @@
 import 'dart:math';
-
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-// ignore: deprecated_member_use
-import 'dart:html' as html;
-// ignore: unused_import
-import 'dart:io' as io;
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  static final String baseUrl = 'http://0.0.0.0:8090';
+  static final String baseUrl = dotenv.env['SERVER_URL']!; // Use the server URL from the environment file
   static final storage = FlutterSecureStorage();
 
   static Map<String, dynamic>? userDetails;
@@ -29,16 +24,9 @@ class AuthService {
       debugPrint('AuthData: ${authData.toString()}');
 
       // Save token securely
-      if (!kIsWeb) {
-        await storage.write(key: 'auth_token', value: authData['token']);
-        if (rememberMe) {
-          await storage.write(key: 'remember_me', value: 'true');
-        }
-      } else {
-        html.window.localStorage['auth_token'] = authData['token'];
-        if (rememberMe) {
-          html.window.localStorage['remember_me'] = 'true';
-        }
+      await storage.write(key: 'auth_token', value: authData['token']);
+      if (rememberMe) {
+        await storage.write(key: 'remember_me', value: 'true');
       }
 
       // Fetch user details after successful login
@@ -69,29 +57,9 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    if (!kIsWeb) {
-      await storage.delete(key: 'auth_token');
-      await storage.delete(key: 'remember_me');
-    } else {
-      html.window.localStorage.remove('auth_token');
-      html.window.localStorage.remove('remember_me');
-    }
+    await storage.delete(key: 'auth_token');
+    await storage.delete(key: 'remember_me');
     userDetails = null;
-  }
-
-  static Future<void> deleteUser(String userId) async {
-    final token = await getAuthToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/api/collections/users/records/$userId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 204) {
-      debugPrint('User deleted successfully');
-    } else {
-      debugPrint('Failed to delete user. Status code: ${response.statusCode}');
-      throw Exception('Failed to delete user. Please try again.');
-    }
   }
 
   static Future<void> register(String email, String password, String username, String age, String height, String weight, String level, String goal, XFile? profileImage) async {
@@ -107,59 +75,36 @@ class AuthService {
       'goal': goal,
     };
 
-    if (kIsWeb) {
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/collections/users/records'));
-      request.fields.addAll(body);
+    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/collections/users/records'));
+    request.fields.addAll(body);
 
-      if (profileImage != null) {
-        var bytes = await profileImage.readAsBytes();
-        var multipartFile = http.MultipartFile.fromBytes('profileImage', bytes, filename: profileImage.name);
-        request.files.add(multipartFile);
-      }
+    if (profileImage != null) {
+      request.files.add(await http.MultipartFile.fromPath('profileImage', profileImage.path));
+    }
 
-      var response = await request.send();
+    var response = await request.send();
 
-      if (response.statusCode == 200) {
-        debugPrint('Registration successful');
-      } else {
-        debugPrint('Failed to register. Status code: ${response.statusCode}');
-        debugPrint('Response body: ${await response.stream.bytesToString()}');
-        throw Exception('Failed to register. Please try again.');
-      }
+    if (response.statusCode == 200) {
+      debugPrint('Registration successful');
     } else {
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/collections/users/records'));
-      request.fields.addAll(body);
+      final responseData = json.decode(await response.stream.bytesToString());
+      debugPrint('Failed to register. Status code: ${response.statusCode}');
+      debugPrint('Response body: $responseData');
 
-      if (profileImage != null) {
-        request.files.add(await http.MultipartFile.fromPath('profileImage', profileImage.path));
+      if (response.statusCode == 400 && responseData['data'] != null && responseData['data']['email'] != null && responseData['data']['email']['code'] == 'validation_not_unique') {
+        throw Exception('The email address is already in use. Please use a different email.');
       }
 
-      var response = await request.send();
-
-      if (response.statusCode == 200) {
-        debugPrint('Registration successful');
-      } else {
-        debugPrint('Failed to register. Status code: ${response.statusCode}');
-        debugPrint('Response body: ${await response.stream.bytesToString()}');
-        throw Exception('Failed to register. Please try again.');
-      }
+      throw Exception('Failed to register. Please try again.');
     }
   }
 
   static Future<String?> getAuthToken() async {
-    if (!kIsWeb) {
-      return await storage.read(key: 'auth_token');
-    } else {
-      return html.window.localStorage['auth_token'];
-    }
+    return await storage.read(key: 'auth_token');
   }
 
   static Future<bool> isRememberMeEnabled() async {
-    if (!kIsWeb) {
-      return (await storage.read(key: 'remember_me')) == 'true';
-    } else {
-      return html.window.localStorage['remember_me'] == 'true';
-    }
+    return (await storage.read(key: 'remember_me')) == 'true';
   }
 
   static Future<void> enableTwoFactorAuth(String userId, String method) async {
@@ -210,6 +155,18 @@ class AuthService {
     }
   }
 
+  static String _generateOtp() {
+    // Generate a random 6-digit OTP
+    final random = Random();
+    return (random.nextInt(900000) + 100000).toString();
+  }
+
+  static Future<void> _sendOtpToUser(String sentTo, String otp) async {
+    // Implement function to send OTP to user via email or SMS
+    // This is a placeholder implementation
+    debugPrint('Sending OTP $otp to $sentTo');
+  }
+
   static Future<void> verifyTwoFactorAuth(String userId, String otp) async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/collections/_otps/records?filter[recordRef]=$userId&filter[password]=$otp'),
@@ -226,17 +183,5 @@ class AuthService {
       debugPrint('Failed to verify 2FA. Status code: ${response.statusCode}');
       throw Exception('Failed to verify 2FA. Please try again.');
     }
-  }
-
-  static String _generateOtp() {
-    // Generate a random 6-digit OTP
-    final random = Random();
-    return (random.nextInt(900000) + 100000).toString();
-  }
-
-  static Future<void> _sendOtpToUser(String sentTo, String otp) async {
-    // Implement function to send OTP to user via email or SMS
-    // This is a placeholder implementation
-    debugPrint('Sending OTP $otp to $sentTo');
   }
 }

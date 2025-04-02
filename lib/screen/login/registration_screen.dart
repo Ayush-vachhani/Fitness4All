@@ -3,6 +3,7 @@ import 'package:fitness4all/services/auth_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'select_age_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -15,11 +16,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
-  final _goalController = TextEditingController();
-  final _levelController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _profileImage;
   String _errorMessage = '';
@@ -45,14 +41,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _emailController.text,
           _passwordController.text,
           _usernameController.text,
-          _ageController.text,
-          _heightController.text,
-          _weightController.text,
-          _levelController.text,
-          _goalController.text,
+          '', // Age will be set later
+          '', // Height will be set later
+          '', // Weight will be set later
+          '', // Level will be set later
+          '', // Goal will be set later
           _profileImage,
         );
-        Navigator.pop(context); // Go back to the login screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SelectAgeScreen(
+              username: _usernameController.text,
+              email: _emailController.text,
+              profileImage: _profileImage,
+            ),
+          ),
+        );
       } catch (e) {
         debugPrint('Registration Error: $e');
         setState(() {
@@ -65,7 +70,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
+      appBar: AppBar(
+        title: Text('Register'),
+        backgroundColor: Colors.lightBlue,
+      ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
@@ -73,118 +81,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(labelText: 'Username'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your username';
-                    }
-                    return null;
-                  },
+                Text(
+                  'Create Account',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
+                SizedBox(height: 20),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _profileImage != null
+                        ? kIsWeb
+                            ? Image.network(_profileImage!.path).image
+                            : Image.file(io.File(_profileImage!.path)).image
+                        : AssetImage("assets/img/placeholder.png"),
+                    child: _profileImage == null ? Icon(Icons.camera_alt, size: 50) : null,
+                  ),
                 ),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: InputDecoration(labelText: 'Confirm Password'),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _ageController,
-                  decoration: InputDecoration(labelText: 'Age'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your age';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _heightController,
-                  decoration: InputDecoration(labelText: 'Height'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your height';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _weightController,
-                  decoration: InputDecoration(labelText: 'Weight'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your weight';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _goalController,
-                  decoration: InputDecoration(labelText: 'Goal'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your goal';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _levelController,
-                  decoration: InputDecoration(labelText: 'Level'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your level';
-                    }
-                    return null;
-                  },
-                ),
+                SizedBox(height: 20),
+                _buildTextField(_usernameController, 'Username', Icons.person),
+                _buildTextField(_emailController, 'Email', Icons.email),
+                _buildTextField(_passwordController, 'Password', Icons.lock, obscureText: true),
+                _buildTextField(_confirmPasswordController, 'Confirm Password', Icons.lock, obscureText: true),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _pickImage,
-                  child: Text('Upload Profile Picture'),
+                  onPressed: _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.lightBlueAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    textStyle: TextStyle(fontSize: 18),
+                  ),
+                  child: Text('Register'),
                 ),
-                if (_profileImage != null)
-                  kIsWeb
-                      ? Image.network(_profileImage!.path) // For web, use Image.network
-                      : Image.file(io.File(_profileImage!.path)), // For mobile, use Image.file
-                SizedBox(height: 20),
-                ElevatedButton(onPressed: _register, child: Text('Register')),
                 if (_errorMessage.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: Text(_errorMessage, style: TextStyle(color: Colors.red)),
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String labelText, IconData icon, {bool obscureText = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon),
+          labelText: labelText,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30.0),
+          ),
+        ),
+        obscureText: obscureText,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter your $labelText';
+          }
+          return null;
+        },
       ),
     );
   }
