@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:fitness4all/screen/login/select_weight_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'select_weight_screen.dart';
 
 class SelectHeightScreen extends StatefulWidget {
-  final String email;
-  final String password;
   final String username;
-  final String age;
+  final String email;
+  final int age;
+  final XFile? profileImage;
 
   SelectHeightScreen({
-    required this.email,
-    required this.password,
     required this.username,
+    required this.email,
     required this.age,
+    required this.profileImage,
   });
 
   @override
@@ -21,40 +22,63 @@ class SelectHeightScreen extends StatefulWidget {
 class _SelectHeightScreenState extends State<SelectHeightScreen> {
   final _heightController = TextEditingController();
 
-  void _next() {
-    final height = _heightController.text;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SelectWeightScreen(
-          email: widget.email,
-          password: widget.password,
-          username: widget.username,
-          age: widget.age,
-          height: height,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Select Height'),
+        backgroundColor: Colors.lightBlue,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            Text(
+              'Enter Your Height',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            TextFormField(
               controller: _heightController,
-              decoration: InputDecoration(labelText: 'Height (cm)'),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.height),
+                labelText: 'Height (cm)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+              ),
               keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your height';
+                }
+                return null;
+              },
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _next,
+              onPressed: () {
+                if (_heightController.text.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectWeightScreen(
+                        username: widget.username,
+                        email: widget.email,
+                        age: widget.age,
+                        height: double.parse(_heightController.text),
+                        profileImage: widget.profileImage,
+                      ),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                textStyle: TextStyle(fontSize: 18),
+              ),
               child: Text('Next'),
             ),
           ],

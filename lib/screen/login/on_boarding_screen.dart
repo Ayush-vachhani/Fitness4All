@@ -65,7 +65,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 fontWeight: FontWeight.w300,
                 type: RoundButtonType.line,
                 onPressed: () {
-                  context.push( const HomeScreen());
+                  context.push( HomeScreen());
                 }),
           )
         ],

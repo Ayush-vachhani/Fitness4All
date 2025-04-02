@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:fitness4all/screen/login/select_height_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'select_height_screen.dart';
 
 class SelectAgeScreen extends StatefulWidget {
-  final String email;
-  final String password;
   final String username;
+  final String email;
+  final XFile? profileImage;
 
   SelectAgeScreen({
-    required this.email,
-    required this.password,
     required this.username,
+    required this.email,
+    required this.profileImage,
   });
 
   @override
@@ -19,39 +20,62 @@ class SelectAgeScreen extends StatefulWidget {
 class _SelectAgeScreenState extends State<SelectAgeScreen> {
   final _ageController = TextEditingController();
 
-  void _next() {
-    final age = _ageController.text;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SelectHeightScreen(
-          email: widget.email,
-          password: widget.password,
-          username: widget.username,
-          age: age,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Select Age'),
+        backgroundColor: Colors.lightBlue,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            Text(
+              'Enter Your Age',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            TextFormField(
               controller: _ageController,
-              decoration: InputDecoration(labelText: 'Age'),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.cake),
+                labelText: 'Age',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+              ),
               keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your age';
+                }
+                return null;
+              },
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _next,
+              onPressed: () {
+                if (_ageController.text.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectHeightScreen(
+                        username: widget.username,
+                        email: widget.email,
+                        age: int.parse(_ageController.text),
+                        profileImage: widget.profileImage,
+                      ),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                textStyle: TextStyle(fontSize: 18),
+              ),
               child: Text('Next'),
             ),
           ],
