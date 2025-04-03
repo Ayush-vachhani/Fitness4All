@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'select_age_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -19,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final ImagePicker _picker = ImagePicker();
   XFile? _profileImage;
   String _errorMessage = '';
+  bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
@@ -27,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  void _register() async {
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
         setState(() {
@@ -35,6 +38,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         return;
       }
+
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
 
       try {
         await AuthService.register(
@@ -48,8 +56,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           '', // Goal will be set later
           _profileImage,
         );
-        Navigator.pushReplacement(
-          context,
+
+        if (!mounted) return;
+
+        // Using standard Navigator.push() with MaterialPageRoute
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => SelectAgeScreen(
               username: _usernameController.text,
@@ -60,65 +71,88 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       } catch (e) {
         debugPrint('Registration Error: $e');
+        if (!mounted) return;
         setState(() {
           _errorMessage = e.toString();
         });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Register'),
+        title: const Text('Register'),
         backgroundColor: Colors.lightBlue,
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               children: [
-                Text(
+                const Text(
                   'Create Account',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 50,
                     backgroundImage: _profileImage != null
                         ? kIsWeb
-                            ? Image.network(_profileImage!.path).image
-                            : Image.file(io.File(_profileImage!.path)).image
-                        : AssetImage("assets/img/placeholder.png"),
-                    child: _profileImage == null ? Icon(Icons.camera_alt, size: 50) : null,
+                        ? Image.network(_profileImage!.path).image
+                        : Image.file(io.File(_profileImage!.path)).image
+                        : const AssetImage("assets/img/placeholder.png"),
+                    child: _profileImage == null
+                        ? const Icon(Icons.camera_alt, size: 50)
+                        : null,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField(_usernameController, 'Username', Icons.person),
                 _buildTextField(_emailController, 'Email', Icons.email),
-                _buildTextField(_passwordController, 'Password', Icons.lock, obscureText: true),
-                _buildTextField(_confirmPasswordController, 'Confirm Password', Icons.lock, obscureText: true),
-                SizedBox(height: 20),
+                _buildTextField(_passwordController, 'Password', Icons.lock,
+                    obscureText: true),
+                _buildTextField(_confirmPasswordController, 'Confirm Password',
+                    Icons.lock, obscureText: true),
+                const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _register,
+                  onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightBlueAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                    textStyle: TextStyle(fontSize: 18),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 15),
                   ),
-                  child: Text('Register'),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text(
+                    'Register',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       _errorMessage,
-                      style: TextStyle(color: Colors.red),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   ),
               ],
@@ -129,7 +163,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String labelText, IconData icon, {bool obscureText = false}) {
+  Widget _buildTextField(
+      TextEditingController controller,
+      String labelText,
+      IconData icon, {
+        bool obscureText = false,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextFormField(
