@@ -32,7 +32,7 @@ class PhysiqueScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Physique'),
-        backgroundColor: TColor.primaryBackground,
+        backgroundColor: TColor.primary,
         foregroundColor: TColor.primaryText,
       ),
       body: Padding(
@@ -75,9 +75,9 @@ class PhysiqueScreen extends StatelessWidget {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: TColor.buttonBackground,
+                    backgroundColor: TColor.primary,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                    textStyle: TextStyle(fontSize: 18, color: TColor.buttonText),
+                    textStyle: TextStyle(fontSize: 18, color: TColor.btnprimaryText),
                   ),
                   child: Text('Finish'),
                 ),
