@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:http/http.dart' as http;
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
+import 'package:fitness4all/screen/login/user_details.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -26,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   // Initialize PocketBase - replace with your server URL
-  final pb = PocketBase('http://192.168.182.20:8090');
+  final pb = PocketBase('http://10.12.83.187:8090');// 10.12.83.187
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
@@ -90,7 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => UserDetailsOnboardingScreen()),
         );
       } on ClientException catch (e) {
         setState(() {
