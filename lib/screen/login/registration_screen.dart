@@ -1,9 +1,11 @@
+import 'package:fitness4all/services/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:fitness4all/services/auth_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' as io;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'select_age_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:http/http.dart' as http;
+import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,14 +16,17 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _profileImage;
   String _errorMessage = '';
   bool _isLoading = false;
+
+  // Initialize PocketBase - replace with your server URL
+  final pb = PocketBase('http://192.168.182.20:8090');
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
@@ -33,9 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
-        setState(() {
-          _errorMessage = 'Passwords do not match';
-        });
+        setState(() => _errorMessage = 'Passwords do not match');
         return;
       }
 
@@ -45,48 +48,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       try {
-        await AuthService.register(
+        // 1. Register with PocketBase
+        final userData = {
+          'username': _usernameController.text,
+          'email': _emailController.text,
+          'password': _passwordController.text,
+          'passwordConfirm': _confirmPasswordController.text,
+          'emailVisibility': true,
+        };
+
+        final record = await pb.collection('users').create(body: userData);
+
+        // 2. Upload profile image if exists
+        if (_profileImage != null) {
+          await pb.collection('users').update(
+            record.id,
+            files: [
+              http.MultipartFile.fromBytes(
+                'avatar',
+                await io.File(_profileImage!.path).readAsBytes(),
+                filename: 'profile.jpg',
+              ),
+            ],
+          );
+        }
+
+        // 3. Authenticate the user
+        await pb.collection('users').authWithPassword(
           _emailController.text,
           _passwordController.text,
+        );
+
+        // 4. Save to local provider
+        Provider.of<UserProvider>(context, listen: false).registerUser(
           _usernameController.text,
-          '', // Age will be set later
-          '', // Height will be set later
-          '', // Weight will be set later
-          '', // Level will be set later
-          '', // Goal will be set later
-          _profileImage,
+          _emailController.text,
+          _passwordController.text,
+          _profileImage?.path,
         );
 
         if (!mounted) return;
-
-        // Using standard Navigator.push() with MaterialPageRoute
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => SelectAgeScreen(
-              username: _usernameController.text,
-              email: _emailController.text,
-              profileImage: _profileImage,
-            ),
-          ),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
         );
-      } catch (e) {
-        debugPrint('Registration Error: $e');
-        if (!mounted) return;
+      } on ClientException catch (e) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = e.response['message'] ?? 'Registration failed';
+        });
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'An error occurred: ${e.toString()}';
         });
       } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
     _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -116,9 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: CircleAvatar(
                     radius: 50,
                     backgroundImage: _profileImage != null
-                        ? kIsWeb
-                        ? Image.network(_profileImage!.path).image
-                        : Image.file(io.File(_profileImage!.path)).image
+                        ? Image.file(io.File(_profileImage!.path)).image
                         : const AssetImage("assets/img/placeholder.png"),
                     child: _profileImage == null
                         ? const Icon(Icons.camera_alt, size: 50)
@@ -164,11 +185,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildTextField(
-      TextEditingController controller,
-      String labelText,
-      IconData icon, {
-        bool obscureText = false,
-      }) {
+      TextEditingController controller, String labelText, IconData icon,
+      {bool obscureText = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextFormField(
@@ -184,6 +202,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         validator: (value) {
           if (value == null || value.isEmpty) {
             return 'Please enter your $labelText';
+          }
+          if (labelText == 'Email' && !value.contains('@')) {
+            return 'Please enter a valid email';
+          }
+          if (labelText == 'Password' && value.length < 6) {
+            return 'Password must be at least 6 characters';
           }
           return null;
         },

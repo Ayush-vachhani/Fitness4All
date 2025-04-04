@@ -1,0 +1,2 @@
+C:/Users/LENOVO/Downloads/SE project/Fitness4All_sub/android/app/.cxx/Debug/674z2g29/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/LENOVO/Downloads/SE project/Fitness4All_sub/android/app/.cxx/Debug/674z2g29/x86_64/CMakeFiles/rebuild_cache.dir

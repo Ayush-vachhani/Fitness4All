@@ -7,30 +7,24 @@ import 'package:fitness4all/screen/home/exercises/exercises_screen.dart';
 import 'package:fitness4all/screen/home/notification/notification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import 'dart:math';
 
 class Favorites extends StatelessWidget {
-  // List of emergency numbers
   final List<String> numList = [
-    '911',
-    '112',
-    '999',
-    '100',
-    '101',
-    '102'
-    // Add more emergency numbers as needed
+    '+91-555-010-155',
+    '+91-123-456-789',
+    '+91-789-456-789',
+    '+91-888-800-808',
   ];
 
-  // Function to launch phone dialer
-  Future<void> _launchPhoneDialer(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
-    if (await canLaunch(launchUri.toString())) {
-      await launch(launchUri.toString());
+  // 📞 Function to launch the dialer
+  void _makeCall(String phone) async {
+    final Uri url = Uri.parse("tel:$phone");
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
-      throw 'Could not launch $launchUri';
+      print("Could not launch dialer");
     }
   }
 
@@ -142,7 +136,7 @@ class Favorites extends StatelessWidget {
                     // Select a random number from the list
                     final random = Random();
                     String randomNumber = numList[random.nextInt(numList.length)];
-                    _launchPhoneDialer(randomNumber);
+                    _makeCall(randomNumber);
                   }),
 
                 ],
