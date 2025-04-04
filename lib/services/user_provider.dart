@@ -9,4 +9,26 @@ class UserProvider with ChangeNotifier {
     _userDetails = userDetails;
     notifyListeners();
   }
+
+  void registerUser(String username, String email, String password, String? profileImagePath) {
+    _userDetails = {
+      'username': username,
+      'password': password,
+      'email': email,
+      'profileImagePath': profileImagePath,
+    };
+    notifyListeners();
+  }
+
+  void updateUserDetails(Map<String, dynamic> details) {
+    if (_userDetails != null) {
+      _userDetails!.addAll(details);
+      notifyListeners();
+    }
+  }
+
+  void clearUserDetails() {
+    _userDetails = null;
+    notifyListeners();
+  }
 }

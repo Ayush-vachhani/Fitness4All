@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'registration_screen.dart';
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
 
-final pb = PocketBase('http://10.12.233.180:8090');
+final pb = PocketBase('http://192.168.182.20:8090');
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
