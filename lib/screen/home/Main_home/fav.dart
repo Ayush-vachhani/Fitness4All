@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:fitness4all/screen/home/Main_home/garph.dart';
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
 import 'package:fitness4all/screen/home/Meals/meals_screen.dart';
@@ -8,7 +9,6 @@ import 'package:fitness4all/screen/home/notification/notification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'dart:math';
 
 class Favorites extends StatelessWidget {
   final List<String> numList = [
@@ -18,7 +18,6 @@ class Favorites extends StatelessWidget {
     '+91-888-800-808',
   ];
 
-  // 📞 Function to launch the dialer
   void _makeCall(String phone) async {
     final Uri url = Uri.parse("tel:$phone");
     if (await canLaunchUrl(url)) {
@@ -132,7 +131,7 @@ class Favorites extends StatelessWidget {
                             builder: (context) => ReportsScreen()));
                       }),
 
-                  _buildTile(context, "Emergency Support", Icons.emergency, Colors.redAccent, () {
+                  _buildTile(context, "Contact Us", Icons.emergency, Colors.redAccent, () {
                     // Select a random number from the list
                     final random = Random();
                     String randomNumber = numList[random.nextInt(numList.length)];

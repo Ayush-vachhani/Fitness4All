@@ -2,6 +2,7 @@ import 'package:fitness4all/common/color_extensions.dart';
 import 'package:fitness4all/common_widgets/round_button.dart';
 import 'package:fitness4all/screen/home/Main_home/home_screen.dart';
 import 'package:fitness4all/screen/login/registration_screen.dart';
+import 'package:fitness4all/screen/login/login_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -147,7 +148,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                     onPressed: () {
                       if (selectPage >= 3) {
                         //Next Screen
-                          context.push(RegisterScreen());
+                          context.push(LoginScreen());
                       } else {
                         selectPage = selectPage + 1;
                         controller.animateToPage(

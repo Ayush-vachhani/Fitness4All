@@ -79,7 +79,7 @@ class _MealsScreenState extends State<MealsScreen> {
   List<Map<String, dynamic>> _foodItems = []; // List to store food items from PocketBase
   Map<String, dynamic>? _foodComparison; // For nutritional comparisons
 
-  final PocketBase pb = PocketBase('http://172.20.10.5:8090'); // Replace with your PocketBase URL
+  final PocketBase pb = PocketBase('http://10.12.83.187:8090'); // Replace with your PocketBase URL
 
   final Map<int, Color> _pageColors = {
     0: Colors.green,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 void main() {
   runApp(const MyApp());
@@ -478,16 +479,16 @@ class TimeBasedChallengesPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            buildGoalOption(context, "Set 7-Day Challenge", Icons.timer, Colors.orange),
-            buildGoalOption(context, "Set 30-Day Challenge", Icons.timer_10, Colors.green),
-            buildGoalOption(context, "Set 90-Day Challenge", Icons.timer_3, Colors.blue),
+            buildGoalOption(context, "Set 7-Day Challenge", Icons.timer, Colors.orange, const SevenDayChallengePage()),
+            buildGoalOption(context, "Set 30-Day Challenge", Icons.timer_10, Colors.green, const ThirtyDayChallengePage()),
+            buildGoalOption(context, "Set 90-Day Challenge", Icons.timer_3, Colors.blue, const NinetyDayChallengePage()),
           ],
         ),
       ),
     );
   }
 
-  Widget buildGoalOption(BuildContext context, String title, IconData icon, Color color) {
+  Widget buildGoalOption(BuildContext context, String title, IconData icon, Color color, [Widget? page]) {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.only(bottom: 15),
@@ -495,14 +496,136 @@ class TimeBasedChallengesPage extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title, style: const TextStyle(fontSize: 18)),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$title clicked!")),
+          if (page != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => page),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("$title clicked!")),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+class SevenDayChallengePage extends StatefulWidget {
+  const SevenDayChallengePage({super.key});
+
+  @override
+  _SevenDayChallengePageState createState() => _SevenDayChallengePageState();
+}
+
+class _SevenDayChallengePageState extends State<SevenDayChallengePage> {
+  final List<bool> _dayCompletionStatus = List.generate(7, (index) => false);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("7-Day Challenge")),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: 7,
+        itemBuilder: (context, index) {
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 10),
+            child: CheckboxListTile(
+              title: Text("Day ${index + 1}"),
+              value: _dayCompletionStatus[index],
+              onChanged: (bool? value) {
+                setState(() {
+                  _dayCompletionStatus[index] = value ?? false;
+                });
+              },
+              secondary: const Icon(Icons.calendar_today),
+            ),
           );
         },
       ),
     );
   }
 }
+
+class ThirtyDayChallengePage extends StatefulWidget {
+  const ThirtyDayChallengePage({super.key});
+
+  @override
+  _ThirtyDayChallengePageState createState() => _ThirtyDayChallengePageState();
+}
+
+class _ThirtyDayChallengePageState extends State<ThirtyDayChallengePage> {
+  final List<bool> _dayCompletionStatus = List.generate(30, (index) => false);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("30-Day Challenge")),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: 30,
+        itemBuilder: (context, index) {
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 10),
+            child: CheckboxListTile(
+              title: Text("Day ${index + 1}"),
+              value: _dayCompletionStatus[index],
+              onChanged: (bool? value) {
+                setState(() {
+                  _dayCompletionStatus[index] = value ?? false;
+                });
+              },
+              secondary: const Icon(Icons.calendar_today),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class NinetyDayChallengePage extends StatefulWidget {
+  const NinetyDayChallengePage({super.key});
+
+  @override
+  _NinetyDayChallengePageState createState() => _NinetyDayChallengePageState();
+}
+
+class _NinetyDayChallengePageState extends State<NinetyDayChallengePage> {
+  final List<bool> _dayCompletionStatus = List.generate(90, (index) => false);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("90-Day Challenge")),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: 90,
+        itemBuilder: (context, index) {
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 10),
+            child: CheckboxListTile(
+              title: Text("Day ${index + 1}"),
+              value: _dayCompletionStatus[index],
+              onChanged: (bool? value) {
+                setState(() {
+                  _dayCompletionStatus[index] = value ?? false;
+                });
+              },
+              secondary: const Icon(Icons.calendar_today),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 class ShareGoalsPage extends StatelessWidget {
   const ShareGoalsPage({super.key});
@@ -552,16 +675,52 @@ class TipsStrategiesPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            buildGoalOption(context, "Tips for Weight Loss", Icons.monitor_weight, Colors.red),
-            buildGoalOption(context, "Tips for Better Sleep", Icons.bedtime, Colors.blue),
-            buildGoalOption(context, "Tips for Calorie Control", Icons.local_fire_department, Colors.green),
+            buildGoalOption(
+                context,
+                "Tips for Weight Loss",
+                Icons.monitor_weight,
+                Colors.red,
+                [
+                  "1. Eat more protein to feel full longer",
+                  "2. Reduce sugar and refined carbs intake",
+                  "3. Drink plenty of water before meals",
+                  "4. Get enough sleep (7-9 hours)",
+                  "5. Incorporate strength training 2-3 times per week"
+                ]
+            ),
+            buildGoalOption(
+                context,
+                "Tips for Better Sleep",
+                Icons.bedtime,
+                Colors.blue,
+                [
+                  "1. Maintain a consistent sleep schedule",
+                  "2. Create a relaxing bedtime routine",
+                  "3. Avoid caffeine and screens before bed",
+                  "4. Keep your bedroom cool and dark",
+                  "5. Exercise regularly but not too close to bedtime"
+                ]
+            ),
+            buildGoalOption(
+                context,
+                "Tips for Calorie Control",
+                Icons.local_fire_department,
+                Colors.green,
+                [
+                  "1. Use smaller plates to control portions",
+                  "2. Eat slowly and mindfully",
+                  "3. Track your food intake with an app",
+                  "4. Choose whole foods over processed ones",
+                  "5. Plan meals ahead to avoid impulsive eating"
+                ]
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget buildGoalOption(BuildContext context, String title, IconData icon, Color color) {
+  Widget buildGoalOption(BuildContext context, String title, IconData icon, Color color, List<String> tips) {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.only(bottom: 15),
@@ -569,15 +728,35 @@ class TipsStrategiesPage extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title, style: const TextStyle(fontSize: 18)),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$title clicked!")),
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text(title),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: tips.map((tip) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(tip),
+                    )).toList(),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close"),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
     );
   }
 }
-
 class SyncWearablePage extends StatelessWidget {
   const SyncWearablePage({super.key});
 
@@ -589,15 +768,15 @@ class SyncWearablePage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            buildGoalOption(context, "Sync with Smartwatch", Icons.watch, Colors.indigo),
-            buildGoalOption(context, "Sync with Fitness Tracker", Icons.fitness_center, Colors.purple),
+            buildDeviceOption(context, "Sync with Smartwatch", Icons.watch, Colors.indigo),
+            buildDeviceOption(context, "Sync with Fitness Tracker", Icons.fitness_center, Colors.purple),
           ],
         ),
       ),
     );
   }
 
-  Widget buildGoalOption(BuildContext context, String title, IconData icon, Color color) {
+  Widget buildDeviceOption(BuildContext context, String title, IconData icon, Color color) {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.only(bottom: 15),
@@ -605,8 +784,42 @@ class SyncWearablePage extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title, style: const TextStyle(fontSize: 18)),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$title clicked!")),
+          showModalBottomSheet(
+            context: context,
+            builder: (context) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Connect $title", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      leading: const Icon(Icons.bluetooth, color: Colors.blue),
+                      title: const Text("Connect via Bluetooth"),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Connecting $title via Bluetooth")),
+                        );
+                        // Add actual Bluetooth connection logic here
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.wifi, color: Colors.green),
+                      title: const Text("Connect via Wi-Fi"),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Connecting $title via Wi-Fi")),
+                        );
+                        // Add actual Wi-Fi connection logic here
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
@@ -642,8 +855,27 @@ class MilestoneNotificationsPage extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title, style: const TextStyle(fontSize: 18)),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$title clicked!")),
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text("$title Notification"),
+              content: Text("We will notify you once you achieve this $title!"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("$title notifications enabled!")),
+                    );
+                  },
+                  child: const Text("Enable Notifications"),
+                ),
+              ],
+            ),
           );
         },
       ),

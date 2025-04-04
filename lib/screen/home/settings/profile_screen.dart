@@ -1,11 +1,7 @@
-import 'dart:io' as io;
-
-import 'package:fitness4all/screen/home/settings/setting_row.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:fitness4all/common/color_extensions.dart';
-import 'package:fitness4all/services/auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:fitness4all/screen/home/settings/setting_row.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,25 +11,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  XFile? _profileImage;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final user = AuthService.userDetails ?? {};
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
         leading: IconButton(
             onPressed: () {
-              if (mounted) {
-                Navigator.pop(context);
-              }
+              context.pop();
             },
             icon: Image.asset(
               "assets/img/back.png",
@@ -56,67 +41,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.only(bottom: 15),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: _profileImage != null
-                      ? kIsWeb
-                          ? Image.network(_profileImage!.path).image
-                          : Image.file(io.File(_profileImage!.path)).image
-                      : (user['avatar'] != null && user['avatar'].isNotEmpty)
-                          ? NetworkImage(user['avatar']) as ImageProvider
-                          : const AssetImage("assets/img/placeholder.png"),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.asset(
+                    "assets/img/Andrew_photo.jpg",
+                    width: 100,
+                    height: 100,
+                  ),
                 ),
                 const SizedBox(
                   width: 20,
                 ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user['username'] ?? '',
-                        style: TextStyle(
-                          color: TColor.primaryText,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Andrew Tate",
+                          style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      Text(
-                        user['email'] ?? '',
-                        style: TextStyle(
-                          color: TColor.primaryText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(
+                          height: 4,
                         ),
-                      ),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      Text(
-                        user['level'] ?? '',
-                        style: TextStyle(
-                          color: TColor.primaryText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                        Text(
+                          "123456789",
+                          style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      Text(
-                        user['goal'] ?? '',
-                        style: TextStyle(
-                          color: TColor.primaryText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(
+                          height: 4,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        Text(
+                          "AndrewTate@gmail.com",
+                          style: TextStyle(color: TColor.primaryText, fontSize: 12),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              "assets/img/location.png",
+                              width: 12,
+                              height: 12,
+                            ),
+                            const SizedBox(
+                              width: 12,
+                            ),
+                            Text(
+                              "Romania",
+                              style: TextStyle(
+                                  color: TColor.primaryText, fontSize: 12),
+                            ),
+                          ],
+                        )
+                      ],
+                    ))
               ],
             ),
           ),
@@ -124,37 +112,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: "Complete Task",
               icon: "assets/img/completed_tasks.png",
               value: "3",
-              onPressed: null),
+              onPressed: () {}),
           SettingRow(
               title: "Level",
               icon: "assets/img/level.png",
-              value: user['level'] ?? '',
-              onPressed: null),
+              value: "Beginner",
+              onPressed: () {}),
           SettingRow(
               title: "Goals",
               icon: "assets/img/goal.png",
-              value: user['goal'] ?? '',
-              onPressed: null),
+              value: "Mass Gain",
+              onPressed: () {}),
           SettingRow(
               title: "Challenges",
               icon: "assets/img/challenges.png",
               value: "4",
-              onPressed: null),
+              onPressed: () {}),
           SettingRow(
               title: "Plans",
               icon: "assets/img/calendar.png",
               value: "2",
-              onPressed: null),
+              onPressed: () {}),
           SettingRow(
               title: "Fitness Device",
               icon: "assets/img/smartwatch.png",
               value: "Mi",
-              onPressed: null),
+              onPressed: () {}),
           SettingRow(
               title: "Refer a Friend",
               icon: "assets/img/share.png",
               value: "",
-              onPressed: null),
+              onPressed: () {}),
+
         ],
       ),
     );

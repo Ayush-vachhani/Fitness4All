@@ -125,7 +125,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   String _selectedCategory = "Cardio";
 
   // Initialize PocketBase
-  final pb = PocketBase('http://10.12.233.180:8090'); // 10.12.233.180
+  final pb = PocketBase('http://10.12.83.187:8090'); // 10.12.233.180
 
   void _showSnackBar(String message, {Color color = Colors.green}) {
     ScaffoldMessenger.of(context).showSnackBar(
